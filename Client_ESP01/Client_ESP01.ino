@@ -22,9 +22,9 @@ uint32_t prev_time;
 extern void (*serverConnect)(bool bConnect);
 
 void setup(void) {
-	Serial.begin(115200);
+  Serial.begin(115200);
 
-	webserver_setup();
+  webserver_setup();
   serverConnect = _serverConnect;
 
   prev_time = millis();
@@ -55,6 +55,7 @@ void _serverConnect(bool bConnect)
   if (bConnect)
   {
     wificlient.connect(serverIP, localPort);
+    delay(500);
   }
   else
   {
