@@ -18,7 +18,7 @@ void webserver_setup()
   /* Set page handler functions */
   webserver.on("/", rootPageHandler);
   webserver.on("/wlan_config", wlanPageHandler);
-  webserver.on("/gpio", serverPageHandler);
+  webserver.on("/server", serverPageHandler);
   webserver.onNotFound(handleNotFound);
 
   webserver.begin();
@@ -45,7 +45,7 @@ void rootPageHandler()
   }
 
   response_message += "<h4><center><a href=\"/wlan_config\">Configure WLAN settings</a></center></h4>";
-  response_message += "<h4><center><a href=\"/gpio\">Configure Server</h4></li></center></h4>";
+  response_message += "<h4><center><a href=\"/server\">Configure Server</a></center></h4>";
   response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);
@@ -54,12 +54,14 @@ void rootPageHandler()
 /* WLAN page allows users to set the WiFi credentials */
 void wlanPageHandler()
 {
+  String passwd_str;
   // Check if there are any GET parameters
   if (webserver.hasArg("ssid"))
   {
     if (webserver.hasArg("password"))
     {
       WiFi.begin(webserver.arg("ssid").c_str(), webserver.arg("password").c_str());
+      passwd_str = webserver.arg("password");
     }
     else
     {
@@ -83,9 +85,10 @@ void wlanPageHandler()
 
   String response_message = "";
   response_message += "<html>";
-  response_message += "<head><title>ESP8266 Webserver</title></head>";
+  response_message += "<head><title>WLAN Settings</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
-
+  response_message += "<form method=\"get\">";
+  
   response_message += "<ul><li><a href=\"/\">Return to main page</a></li></ul>";
 
   if (WiFi.status() == WL_CONNECTED)
@@ -120,11 +123,12 @@ void wlanPageHandler()
     }
 
     response_message += "WiFi password (if required):<br>";
-    response_message += "<input type=\"text\" name=\"password\"><br>";
+    response_message += "<input type=\"text\" value=\""+passwd_str+"\" name=\"password\"><br>";
     response_message += "<input type=\"submit\" value=\"Connect\">";
     response_message += "</form>";
   }
 
+  response_message += "</form>";
   response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);
@@ -147,10 +151,19 @@ void serverPageHandler()
     serverIP.fromString(webserver.arg("server").c_str());
   }
 
+  if (webserver.hasArg("portno"))
+  {
+    localPort = (uint16_t)webserver.arg("portno").toInt();
+  }
+  
+#if _USE_BUTTON_
+  if (webserver.hasArg("action"))
+#else
   if (webserver.hasArg("gpio2"))
+#endif    
   {
 #if _USE_BUTTON_
-    if (webserver.arg("gpio2") == "Connect")
+    if (webserver.arg("action") == "Connect")
 #else
     if (webserver.arg("gpio2") == "1")
 #endif    
@@ -164,48 +177,54 @@ void serverPageHandler()
     serverConnect(bConnect);
   }
 
-  String response_message = "<html><head><title>ESP8266 Webserver</title></head>";
+  String response_message = "<html><head><title>Configure Server</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Configure Server</center></h1>";
   response_message += "<form method=\"get\">";
 
-  response_message += "<ul><li><a href=\"/\">Return to main page</a></li></ul>";
+  response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
   if (wificlient.connected())
   {
-    response_message += "Status: Connected to server<br><br>";
+    response_message += "<center>Status: Connected to server</center><br>";
     bConnect = true;
   }
   else
   {
-    response_message += "Status: Disconnected from server<br><br>";
+    response_message += "<center>Status: Disconnected from server</center><br>";
     bConnect = false;
   }
   
-  response_message += "Server Address:<br>";
-  response_message += "<input type=\"text\" value=\""+serverIP.toString()+"\"name=\"server\"><br><br>";
+  response_message += "<center>Server Address</center>";
+  response_message += "<center><input type=\"text\" value=\""+serverIP.toString()+"\"name=\"server\"></center><br>";
   
-  response_message += "Server Connect:<br>";
+  response_message += "<center>Port No.</center>";
+  response_message += "<center><input type=\"text\" value=\""+String(localPort)+"\"name=\"portno\"></center><br>";
   
+#if (_USE_BUTTON_==0)
+  response_message += "<center>Server Connect</center>";
+#endif
+
   if (bConnect == false)
   {
 #if _USE_BUTTON_
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On<br>";
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off<br>";
+    response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connect\"></center>";
 #else   
-    response_message += "<input type=\"submit\" name=\"gpio2\" value=\"Connect\"><br>";
+    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On</center><br>";
+    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off</center><br>";
 #endif    
   }
   else
   {
 #if _USE_BUTTON_
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>On<br>";
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off<br>";
+    response_message += "<center><input type=\"submit\" name=\"action\" value=\"Disconnect\"></center>";
 #else   
-    response_message += "<input type=\"submit\" name=\"gpio2\" value=\"Disconnect\"><br>";
+    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>On</center><br>";
+    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off</center><br>";
 #endif    
   }
 
-  response_message += "</form></body></html>";
+  response_message += "</form>";
+  response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);
 }
