@@ -9,6 +9,8 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 
+//#define DebugSerial Serial
+
 ESP8266WebServer webserver(80);
 
 void (*serverConnect)(bool bConnect) = _DummyConnect;
@@ -62,19 +64,32 @@ void wlanPageHandler()
     {
       WiFi.begin(webserver.arg("ssid").c_str(), webserver.arg("password").c_str());
       passwd_str = webserver.arg("password");
+      #ifdef DebugSerial
+      DebugSerial.print("Connecting to ");
+      DebugSerial.print(webserver.arg("ssid"));
+      DebugSerial.print(" Password:");
+      DebugSerial.println(passwd_str);
+      #endif
     }
     else
     {
+      #ifdef DebugSerial
       WiFi.begin(webserver.arg("ssid").c_str());
+      DebugSerial.print("Connecting to ");
+      DebugSerial.print(webserver.arg("ssid"));
+      DebugSerial.print(" No Password.");
+      #endif
     }
 
     for (int i = 0; i<200; i++)
     {
       if (WiFi.status() == WL_CONNECTED)
       {
-        Serial.println("WiFi reconnected");
-        Serial.println("New IP address: ");
-        Serial.println(WiFi.localIP());
+        #ifdef DebugSerial
+        DebugSerial.println("WiFi reconnected");
+        DebugSerial.println("New IP address: ");
+        DebugSerial.println(WiFi.localIP());
+        #endif
         break;
       }
       delay(50);
@@ -87,48 +102,45 @@ void wlanPageHandler()
   response_message += "<html>";
   response_message += "<head><title>WLAN Settings</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
-  response_message += "<form method=\"get\">";
   
-  response_message += "<ul><li><a href=\"/\">Return to main page</a></li></ul>";
+  response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    response_message += "Status: Connected<br>";
+    response_message += "<center>Status: Connected</center><br>";
   }
   else
   {
-    response_message += "Status: Disconnected<br>";
+    response_message += "<center>Status: Disconnected</center><br>";
   }
 
-  response_message += "<p>To connect to a WiFi network, please select a network...</p>";
+  response_message += "<center><p>To connect to a WiFi network, please select a network...</p></center>";
 
   // Get number of visible access points
   int ap_count = WiFi.scanNetworks();
 
   if (ap_count == 0)
   {
-    response_message += "No access points found.<br>";
+    response_message += "<center>No access points found.</center><br>";
   }
   else
   {
     response_message += "<form method=\"get\">";
-
     // Show access points
     for (uint8_t ap_idx = 0; ap_idx < ap_count; ap_idx++)
     {
-      response_message += "<input type=\"radio\" name=\"ssid\" value=\"" + String(WiFi.SSID(ap_idx)) + "\">";
+      response_message += "<center><input type=\"radio\" name=\"ssid\" value=\"" + String(WiFi.SSID(ap_idx)) + "\">";
       response_message += String(WiFi.SSID(ap_idx)) + " (RSSI: " + WiFi.RSSI(ap_idx) + ")";
       (WiFi.encryptionType(ap_idx) == ENC_TYPE_NONE) ? response_message += " " : response_message += "*";
-      response_message += "<br><br>";
+      response_message += "</center><br>";
     }
 
-    response_message += "WiFi password (if required):<br>";
-    response_message += "<input type=\"text\" value=\""+passwd_str+"\" name=\"password\"><br>";
-    response_message += "<input type=\"submit\" value=\"Connect\">";
+    response_message += "<center>WiFi password (if required):</center>";
+    response_message += "<center><input type=\"text\" value=\""+passwd_str+"\" name=\"password\"></center><br>";
+    response_message += "<center><input type=\"submit\" value=\"Connect\"></center>";
     response_message += "</form>";
   }
-
-  response_message += "</form>";
+  
   response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);
@@ -179,7 +191,6 @@ void serverPageHandler()
 
   String response_message = "<html><head><title>Configure Server</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Configure Server</center></h1>";
-  response_message += "<form method=\"get\">";
 
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
@@ -193,6 +204,8 @@ void serverPageHandler()
     response_message += "<center>Status: Disconnected from server</center><br>";
     bConnect = false;
   }
+
+  response_message += "<form method=\"get\">";
   
   response_message += "<center>Server Address</center>";
   response_message += "<center><input type=\"text\" value=\""+serverIP.toString()+"\"name=\"server\"></center><br>";
@@ -203,7 +216,6 @@ void serverPageHandler()
 #if (_USE_BUTTON_==0)
   response_message += "<center>Server Connect</center>";
 #endif
-
   if (bConnect == false)
   {
 #if _USE_BUTTON_
@@ -222,8 +234,8 @@ void serverPageHandler()
     response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off</center><br>";
 #endif    
   }
-
   response_message += "</form>";
+  
   response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);
