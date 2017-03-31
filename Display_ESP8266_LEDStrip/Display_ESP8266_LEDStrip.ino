@@ -8,14 +8,14 @@
 #include <avr/pgmspace.h>
 #endif
 
+//#define DebugSerial Serial
+
 #include <ESP8266WiFi.h>
 #include <WiFiServer.h>
 
 unsigned int localPort = 1234;
 
 WiFiServer wifiserver(localPort);
-
-//#define DebugSerial Serial
 
 int Count_Val;
 int Count_Init;
@@ -34,17 +34,21 @@ void setup(void) {
 	{
 		if (WiFi.status() == WL_CONNECTED)
 		{
-			Serial.println(F("WiFi connected"));
-			Serial.println(F("IP address: "));
-			Serial.println(WiFi.localIP());
+    #ifdef DebugSerial
+			DebugSerial.println(F("WiFi connected"));
+			DebugSerial.println(F("IP address: "));
+			DebugSerial.println(WiFi.localIP());
+    #endif
 			break;
 		}
 		delay(50);
 	}
 
-	Serial.println(F("Starting WifiServer"));
-	Serial.print(F("Local port: "));
-	Serial.println(localPort);
+#ifdef DebugSerial
+	DebugSerial.println(F("Starting WifiServer"));
+	DebugSerial.print(F("Local port: "));
+	DebugSerial.println(localPort);
+#endif 
 
 	webserver_setup();
   wifiserver.begin();
@@ -65,8 +69,8 @@ void loop(void) {
 void UpdateDisplay(void)
 {
   #ifdef DebugSerial
-  DebugSerial.print("Count = ");
-  DebugSerial.println(Count_Val);
+  //DebugSerial.print("Count = ");
+  //DebugSerial.println(Count_Val);
   #endif
   setSegments((Count_Val+9)/10);
 }
@@ -114,8 +118,8 @@ void wifiserver_loop(void)
   {
     while (client.available()>0) {
       unsigned char b = client.read();
-      client.write(b);
-      Serial.write(b);
+      client.write(b);  //echo back to controller
+      Serial.write(b);  //pass to Arduino
       ProcessCommand(b);
     }
   }

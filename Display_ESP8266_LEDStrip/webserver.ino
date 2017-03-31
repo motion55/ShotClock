@@ -17,11 +17,13 @@ ESP8266WebServer webserver(80);
 
 void webserver_setup()
 {
-  IPAddress local_IP(192,168,4,123);
-  IPAddress gateway(192,168,4,123);
+#if 0
+  IPAddress local_IP(192,168,244,123);
+  IPAddress gateway(192,168,244,123);
   IPAddress subnet(255,255,255,0);
 
   WiFi.softAPConfig(local_IP, gateway, subnet);
+#endif  
   
   WiFi.softAP(ap_ssid,ap_password); 
 	/* Set page handler functions */
@@ -83,9 +85,11 @@ void wlanPageHandler()
 		{
 			if (WiFi.status() == WL_CONNECTED)
 			{
-				Serial.println("WiFi reconnected");
-				Serial.println("New IP address: ");
-				Serial.println(WiFi.localIP());
+      #ifdef DebugSerial
+				DebugSerial.println("WiFi reconnected");
+				DebugSerial.println("New IP address: ");
+				DebugSerial.println(WiFi.localIP());
+      #endif
 				break;
 			}
 			//LoadDisplayBuffer(Len);
@@ -111,6 +115,9 @@ void wlanPageHandler()
 	{
 		response_message += "Status: Disconnected<br>";
 	}
+  response_message += "Local IP Adress:"+WiFi.localIP().toString()+"<br>";
+  response_message += "Gateway IP Adress:"+WiFi.subnetMask().toString()+"<br>";
+  response_message += "Gateway IP Adress:"+WiFi.gatewayIP().toString()+"<br><br>";
 
 	response_message += "<p>To connect to a WiFi network, please select a network...</p>";
 

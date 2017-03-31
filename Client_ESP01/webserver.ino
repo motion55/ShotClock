@@ -13,6 +13,9 @@
 const char *ap_ssid = "Controller";
 const char *ap_password = "12345678";
 
+const char *server_ssid = "ShotClock";
+const char *server_password = "12345678";
+
 ESP8266WebServer webserver(80);
 
 void webserver_setup()
@@ -25,6 +28,10 @@ void webserver_setup()
   webserver.onNotFound(handleNotFound);
 
   webserver.begin();
+
+  delay(1000);
+  WiFi.begin(server_ssid,server_password);
+  delay(3000);
 }
 
 inline void webserver_loop()
@@ -91,6 +98,7 @@ void wlanPageHandler()
         DebugSerial.println("Local IP address: ");
         DebugSerial.println(WiFi.localIP());
         #endif
+        serverIP = WiFi.gatewayIP();
         break;
       }
       delay(50);
@@ -115,6 +123,7 @@ void wlanPageHandler()
     response_message += "<center>Status: Disconnected</center>";
   }
   response_message += "<center>Local IP Adress:"+WiFi.localIP().toString()+"</center>";
+  response_message += "<center>Gateway IP Adress:"+WiFi.subnetMask().toString()+"</center>";
   response_message += "<center>Gateway IP Adress:"+WiFi.gatewayIP().toString()+"</center><br>";
 
   response_message += "<center><p>To connect to a WiFi network, please select a network...</p></center>";
@@ -204,6 +213,7 @@ void serverPageHandler()
     Connected = false;
   }
   response_message += "<center>Local IP Adress:"+WiFi.localIP().toString()+"</center>";
+  response_message += "<center>Gateway IP Adress:"+WiFi.subnetMask().toString()+"</center>";
   response_message += "<center>Gateway IP Adress:"+WiFi.gatewayIP().toString()+"</center><br>";
 
   response_message += "<form method=\"get\">";

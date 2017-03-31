@@ -24,13 +24,6 @@ CRGBSet segF(  leds(pps * 5,  pps - 1+(pps * 5)  ));
 CRGBSet segG(  leds(pps * 6,  pps - 1+(pps * 6)  ));
 //-----------------------------------------------------------------------------------------------------------
 
-#define PORT  "1234"
-String ssid = "Thesis";
-String IPADDRESS  = "192.168.1.4";
-String PASSWORD = "12345678";
-int Na_received_na_Time = 24;
-int count = 24;
-
 void LEDStrip_setup() 
 {
   pinMode(DATA_PIN, OUTPUT);

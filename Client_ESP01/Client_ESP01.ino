@@ -1,7 +1,5 @@
 /*
-
 */
-
 #include <Arduino.h>
 
 #if defined(ESP8266)
@@ -10,12 +8,12 @@
 #include <avr/pgmspace.h>
 #endif
 
-#define DebugSerial Serial
+//#define DebugSerial Serial
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 
-IPAddress serverIP(192,168,4,123);
+IPAddress serverIP;
 uint16_t localPort = 1234;
 
 WiFiClient wificlient;
