@@ -10,18 +10,20 @@
 #include <ESP8266WebServer.h>
 
 // Access point credentials
-const char *ap_ssid = "ESPap";
-const char *ap_password = "thereisnospoon";
-
-// ESP8266 GPIO pins
-#define GPIO2 2
+const char *ap_ssid = "ShotClock";
+const char *ap_password = "12345678";
 
 ESP8266WebServer webserver(80);
 
-void (*DisplayLogo)(bool bLogo) = _DisplayLogo;
-
 void webserver_setup()
 {
+  IPAddress local_IP(192,168,4,123);
+  IPAddress gateway(192,168,4,123);
+  IPAddress subnet(255,255,255,0);
+
+  WiFi.softAPConfig(local_IP, gateway, subnet);
+  
+  WiFi.softAP(ap_ssid,ap_password); 
 	/* Set page handler functions */
 	webserver.on("/", rootPageHandler);
 	webserver.on("/wlan_config", wlanPageHandler);
@@ -143,12 +145,6 @@ void wlanPageHandler()
 	webserver.send(200, "text/html", response_message);
 }
 
-boolean bLogo = true;
-
-void _DisplayLogo(bool bLogo)
-{
-}
-
 /*///////////////////////////////////////////////////////////////////////////*/
 
 /* GPIO page allows you to control the GPIO pins */
@@ -159,37 +155,55 @@ void gpioPageHandler()
 	{
 		if (webserver.arg("gpio2") == "1")
 		{
-			//digitalWrite(GPIO2, HIGH);
-			bLogo = true;
+      StopCount(false);
 		}
 		else
 		{
-			//digitalWrite(GPIO2, LOW);
-			bLogo = false;
+      StopCount(true);
 		}
-    DisplayLogo(bLogo);
 	}
+ 
+  if (webserver.hasArg("icount"))
+  {
+    Count_Init = (uint16_t)webserver.arg("icount").toInt()*10;
+  }
+  
+  if (webserver.hasArg("reset"))
+  {
+    if (webserver.arg("reset") == "Reset")
+    {
+      StopCount(true);
+      Count_Val = Count_Init;
+    }
+  }
+  
+  /*//////////////////////////////////////////////////////////////*/ 
 
 	String response_message = "<html><head><title>ESP8266 Webserver</title></head>";
 	response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Control GPIO pins</center></h1>";
 	response_message += "<form method=\"get\">";
 
-	response_message += "<ul><li><a href=\"/\">Return to main page</a></li></ul>";
+	response_message += "<a href=\"/\">Return to main page</a><br><br>";
 
-	response_message += "LOGO:<br>";
+	response_message += "Shot Clock:<br>";
 
-	if (bLogo == false)
+	if (Stop)
 	{
 		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On<br>";
-		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off<br>";
+		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off<br><br>";
 	}
 	else
 	{
 		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>On<br>";
-		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off<br>";
+		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off<br><br>";
 	}
 
-	response_message += "</form></body></html>";
+  response_message += "Initial Count(secs.)<br>";
+  response_message += "<input type=\"text\" name=\"icount\" value=\""+String(Count_Init/10)+"\"><br>";
+  response_message += "<input type=\"submit\" name=\"reset\" value=\"Reset\"><br>";
+  
+  response_message += "</form>";
+	response_message += "</body></html>";
 
 	webserver.send(200, "text/html", response_message);
 }

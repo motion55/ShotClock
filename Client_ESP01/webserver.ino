@@ -9,14 +9,15 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 
-//#define DebugSerial Serial
+// Access point credentials
+const char *ap_ssid = "Controller";
+const char *ap_password = "12345678";
 
 ESP8266WebServer webserver(80);
 
-void (*serverConnect)(bool bConnect) = _DummyConnect;
-
 void webserver_setup()
 {
+  WiFi.softAP(ap_ssid,ap_password); 
   /* Set page handler functions */
   webserver.on("/", rootPageHandler);
   webserver.on("/wlan_config", wlanPageHandler);
@@ -87,7 +88,7 @@ void wlanPageHandler()
       {
         #ifdef DebugSerial
         DebugSerial.println("WiFi reconnected");
-        DebugSerial.println("New IP address: ");
+        DebugSerial.println("Local IP address: ");
         DebugSerial.println(WiFi.localIP());
         #endif
         break;
@@ -107,12 +108,14 @@ void wlanPageHandler()
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    response_message += "<center>Status: Connected</center><br>";
+    response_message += "<center>Status: Connected</center>";
   }
   else
   {
-    response_message += "<center>Status: Disconnected</center><br>";
+    response_message += "<center>Status: Disconnected</center>";
   }
+  response_message += "<center>Local IP Adress:"+WiFi.localIP().toString()+"</center>";
+  response_message += "<center>Gateway IP Adress:"+WiFi.gatewayIP().toString()+"</center><br>";
 
   response_message += "<center><p>To connect to a WiFi network, please select a network...</p></center>";
 
@@ -146,11 +149,6 @@ void wlanPageHandler()
   webserver.send(200, "text/html", response_message);
 }
 
-bool bConnect = true;
-
-void _DummyConnect(bool bConnect)
-{
-}
 
 /*///////////////////////////////////////////////////////////////////////////*/
 #define _USE_BUTTON_  1
@@ -158,9 +156,9 @@ void _DummyConnect(bool bConnect)
 void serverPageHandler()
 {
   // Check if there are any GET parameters
-  if (webserver.hasArg("server"))
+  if (webserver.hasArg("serverIP"))
   {
-    serverIP.fromString(webserver.arg("server").c_str());
+    serverIP.fromString(webserver.arg("serverIP").c_str());
   }
 
   if (webserver.hasArg("portno"))
@@ -180,13 +178,12 @@ void serverPageHandler()
     if (webserver.arg("gpio2") == "1")
 #endif    
     {
-      bConnect = true;
+      serverConnect(true);
     }
     else
     {
-      bConnect = false;
+      serverConnect(false);
     }
-    serverConnect(bConnect);
   }
 
   String response_message = "<html><head><title>Configure Server</title></head>";
@@ -194,32 +191,43 @@ void serverPageHandler()
 
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
+  bool Connected;
+  
   if (wificlient.connected())
   {
-    response_message += "<center>Status: Connected to server</center><br>";
-    bConnect = true;
+    response_message += "<center>Status: Connected to server</center>";
+    Connected = true;
   }
   else
   {
-    response_message += "<center>Status: Disconnected from server</center><br>";
-    bConnect = false;
+    response_message += "<center>Status: Disconnected from server</center>";
+    Connected = false;
   }
+  response_message += "<center>Local IP Adress:"+WiFi.localIP().toString()+"</center>";
+  response_message += "<center>Gateway IP Adress:"+WiFi.gatewayIP().toString()+"</center><br>";
 
   response_message += "<form method=\"get\">";
   
   response_message += "<center>Server Address</center>";
-  response_message += "<center><input type=\"text\" value=\""+serverIP.toString()+"\"name=\"server\"></center><br>";
+  response_message += "<center><input type=\"text\" value=\""+serverIP.toString()+"\" name=\"serverIP\"></center><br>";
   
   response_message += "<center>Port No.</center>";
-  response_message += "<center><input type=\"text\" value=\""+String(localPort)+"\"name=\"portno\"></center><br>";
+  response_message += "<center><input type=\"text\" value=\""+String(localPort)+"\" name=\"portno\"></center><br>";
   
 #if (_USE_BUTTON_==0)
   response_message += "<center>Server Connect</center>";
 #endif
-  if (bConnect == false)
+  if (Connected == false)
   {
 #if _USE_BUTTON_
-    response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connect\"></center>";
+    if (bConnect)
+    {
+      response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connecting\"></center>";
+    }
+    else
+    {
+      response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connect\"></center>";
+    }
 #else   
     response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On</center><br>";
     response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off</center><br>";

@@ -20,13 +20,12 @@ WiFiServer wifiserver(localPort);
 int Count_Val;
 int Count_Init;
 uint32_t prev_time;
-extern void (*DisplayLogo)(bool bLogo);
 
 bool Reset = false;
 bool Stop = true;
 
 void setup(void) {
-	Serial.begin(115200);
+	Serial.begin(9600);
   Stop = true;
   Count_Val = 100;
   Count_Init = 100;
@@ -47,7 +46,6 @@ void setup(void) {
 	Serial.print(F("Local port: "));
 	Serial.println(localPort);
 
-  DisplayLogo = StartCount;
 	webserver_setup();
   wifiserver.begin();
 
@@ -91,7 +89,7 @@ void UpdateTime(void)
       else
       {
         Count_Val = Count_Init;
-        Stop = true;
+        StopCount(true);
       }
     }
   }
@@ -103,7 +101,14 @@ void wifiserver_loop(void)
 {
   if (!client.connected())
   {
-    client = wifiserver.available();
+    if (wifiserver.hasClient())
+    {
+      client = wifiserver.available();
+    }
+    else
+    {
+      client.stop();
+    }
   }
   else
   {
@@ -150,25 +155,27 @@ void ProcessCommand(char cmd)
   switch (cmd) {
     case 'Z':                     //start send Z
     case 'z':
-      StartCount(true);
       Reset = false;
+      StopCount(false);
       break;
     case 'X':                     //stop send X
     case 'x':                     //stop send X
-      Stop = true;
       Reset = false;
+      StopCount(true);
       break;
     case 'Q':               //to reset, sample send Q14
     case 'q':               //to reset, sample send Q14
       Stop = true;
       Reset = true;
       Count_str = "";
+      StopCount(true);
       break;
     case 'A':
     case 'a':
       Stop = true;
       Reset = false;
       Count_Val = Count_Init;
+      StopCount(true);
       break;
   }
 }
@@ -188,12 +195,12 @@ void my_delay_ms(int msec)
 	}
 }
 
-void StartCount(bool bStart)
+void StopCount(bool bStop)
 {
-  if (bStart)
+  if (!bStop)
   {
-    if (Count_Val<=0) Count_Val = Count_Init;
     Stop = false;
+    if (Count_Val<=0) Count_Val = Count_Init;
     prev_time = millis();
   }
   else
