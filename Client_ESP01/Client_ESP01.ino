@@ -13,28 +13,27 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 
-IPAddress serverIP;
+IPAddress serverIP(192,168,5,1);
 uint16_t localPort = 1234;
 
 WiFiClient wificlient;
 
-uint32_t prev_time;
+bool bConnect;
+unsigned long last_connect;
 
 void setup(void) {
   Serial.begin(115200);
 
   webserver_setup();
 
-  prev_time = millis();
+  bConnect = true;
+  last_connect = millis();
 }
 
 void loop(void) {
   webserver_loop();
   wificlient_loop();
 }
-
-bool bConnect;
-unsigned long last_connect = 0;
 
 void wificlient_loop(void)
 {
@@ -61,6 +60,7 @@ void wificlient_loop(void)
         wificlient.stop();
         serverConnect(true);
       }
+      last_connect = curr_connect;
     }
   }
 }
