@@ -17,6 +17,8 @@ unsigned int localPort = 1234;
 
 WiFiServer wifiserver(localPort);
 
+#include "FastLED.h"
+
 int Count_Val;
 int Count_Init;
 uint32_t prev_time;
@@ -29,7 +31,10 @@ void setup(void) {
   Stop = true;
   Count_Val = 100;
   Count_Init = 100;
+  UpdateDisplay();
 
+  LEDStrip_setup();
+  
 	for (int i = 0; i<400; i++)
 	{
 		if (WiFi.status() == WL_CONNECTED)
@@ -41,7 +46,7 @@ void setup(void) {
     #endif
 			break;
 		}
-		delay(50);
+		FastLED.delay(50);
 	}
 
 #ifdef DebugSerial
@@ -54,8 +59,6 @@ void setup(void) {
   wifiserver.begin();
 
   prev_time = millis();
-
-  LEDStrip_setup();
 }
 
 void loop(void) {

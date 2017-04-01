@@ -9,6 +9,8 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 
+#include "FastLED.h"
+
 // Access point credentials
 const char *ap_ssid = "ShotClock";
 const char *ap_password = "12345678";
@@ -17,13 +19,12 @@ ESP8266WebServer webserver(80);
 
 void webserver_setup()
 {
-#if 1
   IPAddress local_IP(192,168,5,1);
   IPAddress gateway(192,168,5,1);
   IPAddress subnet(255,255,255,0);
 
   WiFi.softAPConfig(local_IP, gateway, subnet);
-#endif  
+
   WiFi.softAP(ap_ssid,ap_password); 
 	/* Set page handler functions */
 	webserver.on("/", rootPageHandler);
@@ -92,10 +93,10 @@ void wlanPageHandler()
 				break;
 			}
 			//LoadDisplayBuffer(Len);
-			delay(50);
+			FastLED.delay(50);
 		}
 		//ResetScrollPos();
-		delay(1000);
+		FastLED.delay(1000);
 		webserver_setup();
 	}
 

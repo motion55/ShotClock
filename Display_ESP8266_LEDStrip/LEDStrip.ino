@@ -34,7 +34,7 @@ void LEDStrip_setup()
 
 void LEDStrip_loop()
 {
-  FastLED.delay(1);
+  FastLED.delay(2);
 }
 
 void setSegments(uint8_t count) {
