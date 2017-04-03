@@ -1,7 +1,7 @@
 
 #include "FastLED.h"
 
-#define DATA_PIN    4 //GPIO2
+#define DATA_PIN    4
 #define LED_TYPE    SK6812
 #define COLOR_ORDER RGB
 #define NUM_LEDS    56
@@ -34,7 +34,7 @@ void LEDStrip_setup()
 
 void LEDStrip_loop()
 {
-  FastLED.delay(20);
+  FastLED.delay(1);
 }
 
 void setSegments(uint8_t count) {

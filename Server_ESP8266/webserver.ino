@@ -65,7 +65,6 @@ void rootPageHandler()
 /* WLAN page allows users to set the WiFi credentials */
 void wlanPageHandler()
 {
-  bool WiFiConnect = false;
 	// Check if there are any GET parameters
 	if (webserver.hasArg("ssid"))
 	{
@@ -77,7 +76,26 @@ void wlanPageHandler()
 		{
 			WiFi.begin(webserver.arg("ssid").c_str());
 		}
-    WiFiConnect = true;
+
+		String ReConnectStr("Reconnecting... ");
+
+		for (int i = 0; i<200; i++)
+		{
+			if (WiFi.status() == WL_CONNECTED)
+			{
+      #ifdef DebugSerial
+				DebugSerial.println("WiFi reconnected");
+				DebugSerial.println("New IP address: ");
+				DebugSerial.println(WiFi.localIP());
+      #endif
+				break;
+			}
+			//LoadDisplayBuffer(Len);
+			FastLED.delay(50);
+		}
+		//ResetScrollPos();
+		FastLED.delay(1000);
+		webserver_setup();
 	}
 
 	String response_message = "";
@@ -123,40 +141,17 @@ void wlanPageHandler()
 
 		response_message += "WiFi password (if required):<br>";
 		response_message += "<input type=\"text\" name=\"password\"><br>";
-    if (WiFiConnect)
-    {
-      response_message += "<input type=\"submit\" value=\"Connecting\">";
-    }
-    else
-    {
-      response_message += "<input type=\"submit\" value=\"Connect\">";
-    }
+		response_message += "<input type=\"submit\" value=\"Connect\">";
 		response_message += "</form>";
 	}
 
 	response_message += "</body></html>";
 
 	webserver.send(200, "text/html", response_message);
-
-  if (WiFiConnect)
-  {
-    for (int i = 0; i<200; i++)
-    {
-      if (WiFi.status() == WL_CONNECTED)
-      {
-      #ifdef DebugSerial
-        DebugSerial.println("WiFi reconnected");
-        DebugSerial.println("New IP address: ");
-        DebugSerial.println(WiFi.localIP());
-      #endif
-        break;
-      }
-      FastLED.delay(50);
-    }
-  }
 }
 
 /*///////////////////////////////////////////////////////////////////////////*/
+bool Stop = true;
 
 /* GPIO page allows you to control the GPIO pins */
 void gpioPageHandler()
@@ -166,25 +161,22 @@ void gpioPageHandler()
 	{
 		if (webserver.arg("gpio2") == "1")
 		{
-      StopCount(false);
+      Stop = false;
 		}
 		else
 		{
-      StopCount(true);
+      Stop = true;
 		}
 	}
- 
+
   if (webserver.hasArg("icount"))
   {
-    Count_Init = (uint16_t)webserver.arg("icount").toInt()*10;
   }
   
   if (webserver.hasArg("reset"))
   {
     if (webserver.arg("reset") == "Reset")
     {
-      StopCount(true);
-      Count_Val = Count_Init;
     }
   }
   
@@ -209,9 +201,9 @@ void gpioPageHandler()
 		response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off<br><br>";
 	}
 
-  response_message += "Initial Count(secs.)<br>";
-  response_message += "<input type=\"text\" name=\"icount\" value=\""+String(Count_Init/10)+"\"><br>";
-  response_message += "<input type=\"submit\" name=\"reset\" value=\"Reset\"><br>";
+  //response_message += "Initial Count(secs.)<br>";
+  //response_message += "<input type=\"text\" name=\"icount\" value=\""+String(Count_Init/10)+"\"><br>";
+  //response_message += "<input type=\"submit\" name=\"reset\" value=\"Reset\"><br>";
   
   response_message += "</form>";
 	response_message += "</body></html>";

@@ -20,13 +20,12 @@ ESP8266WebServer webserver(80);
 
 void webserver_setup()
 {
-#if 1
   IPAddress local_IP(192,168,6,1);
   IPAddress gateway(192,168,6,1);
   IPAddress subnet(255,255,255,0);
 
   WiFi.softAPConfig(local_IP, gateway, subnet);
-#endif  
+
   WiFi.softAP(ap_ssid,ap_password); 
   /* Set page handler functions */
   webserver.on("/", rootPageHandler);
@@ -209,7 +208,7 @@ void serverPageHandler()
 
   bool Connected;
   
-  if (wificlient.connected())
+  if (wifiClient.connected())
   {
     response_message += "<center>Status: Connected to server</center>";
     Connected = true;

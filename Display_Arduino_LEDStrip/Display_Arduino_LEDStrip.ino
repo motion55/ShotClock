@@ -10,13 +10,6 @@
 
 //#define DebugSerial Serial
 
-#include <ESP8266WiFi.h>
-#include <WiFiServer.h>
-
-unsigned int localPort = 1234;
-
-WiFiServer wifiserver(localPort);
-
 #include "FastLED.h"
 
 int Count_Val;
@@ -29,35 +22,12 @@ bool Stop = true;
 void setup(void) {
 	Serial.begin(115200);
   Stop = true;
-  Count_Val = 100;
-  Count_Init = 100;
+  Count_Val = 240;
+  Count_Init = 240;
   UpdateDisplay();
 
   LEDStrip_setup();
   
-	for (int i = 0; i<400; i++)
-	{
-		if (WiFi.status() == WL_CONNECTED)
-		{
-    #ifdef DebugSerial
-			DebugSerial.println(F("WiFi connected"));
-			DebugSerial.println(F("IP address: "));
-			DebugSerial.println(WiFi.localIP());
-    #endif
-			break;
-		}
-		FastLED.delay(50);
-	}
-
-#ifdef DebugSerial
-	DebugSerial.println(F("Starting WifiServer"));
-	DebugSerial.print(F("Local port: "));
-	DebugSerial.println(localPort);
-#endif 
-
-	webserver_setup();
-  wifiserver.begin();
-
   prev_time = millis();
 }
 
@@ -98,32 +68,6 @@ void UpdateTime(void)
         Count_Val = Count_Init;
         StopCount(true);
       }
-    }
-  }
-}
-
-WiFiClient client;
-
-void wifiserver_loop(void)
-{
-  if (!client.connected())
-  {
-    if (wifiserver.hasClient())
-    {
-      client = wifiserver.available();
-    }
-    else
-    {
-      client.stop();
-    }
-  }
-  else
-  {
-    while (client.available()>0) {
-      unsigned char b = client.read();
-      client.write(b);  //echo back to controller
-      Serial.write(b);  //pass to Arduino
-      ProcessCommand(b);
     }
   }
 }
@@ -196,8 +140,6 @@ void my_delay_ms(int msec)
 	{
     UpdateTime();
     LEDStrip_loop();
-		webserver_loop();
-    wifiserver_loop();
 		endWait = millis();
 	}
 }

@@ -8,15 +8,13 @@
 #include <avr/pgmspace.h>
 #endif
 
-//#define DebugSerial Serial
+#define DebugSerial Serial
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 
 IPAddress serverIP(192,168,5,1);
 uint16_t localPort = 1234;
-
-WiFiClient wificlient;
 
 bool bConnect;
 unsigned long last_connect;
@@ -26,28 +24,39 @@ void setup(void) {
 
   webserver_setup();
 
-  bConnect = true;
+  bConnect = false;
   last_connect = millis();
 }
 
 void loop(void) {
   webserver_loop();
-  wificlient_loop();
+  wifiClient_loop();
+  delay(10);
 }
 
-void wificlient_loop(void)
+WiFiClient wifiClient;
+#define _echo_commands_ 1
+
+void wifiClient_loop(void)
 {
   unsigned long curr_connect = millis();
   
-  if (wificlient.connected())
+  if (WiFi.status()!=WL_CONNECTED) return;  
+  
+  if (wifiClient.connected())
   {
     while (Serial.available()>0) {
       uint8_t b = Serial.read();
-      wificlient.write(b);
+#if (_echo_commands_==0)
+      wifiClient.write(b);
+#endif    
     }
-    while (wificlient.available()>0) {
-      uint8_t b = wificlient.read();
+    while (wifiClient.available()>0) {
+      uint8_t b = wifiClient.read();
       Serial.write(b);
+#if (_echo_commands_)
+      wifiClient.write(b);
+#endif
     }
     last_connect = curr_connect;
   }
@@ -57,7 +66,7 @@ void wificlient_loop(void)
     {
       if (bConnect)
       {
-        wificlient.stop();
+        wifiClient.stop();
         serverConnect(true);
       }
       last_connect = curr_connect;
@@ -71,7 +80,7 @@ void serverConnect(bool Connect)
   {
     bConnect = true;
     last_connect = millis();
-    wificlient.connect(serverIP, localPort);
+    wifiClient.connect(serverIP, localPort);
     #ifdef DebugSerial
     DebugSerial.print("Connecting to ");
     DebugSerial.print(serverIP.toString());
@@ -82,7 +91,7 @@ void serverConnect(bool Connect)
   else
   {
     bConnect = false;
-    wificlient.stop();
+    wifiClient.stop();
     #ifdef DebugSerial
     DebugSerial.print("Disconnected from server.");
     #endif
