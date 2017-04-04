@@ -11,21 +11,10 @@
 
 #include "FastLED.h"
 
-// Access point credentials
-const char *ap_ssid = "ShotClock";
-const char *ap_password = "12345678";
-
 ESP8266WebServer webserver(80);
 
 void webserver_setup()
 {
-  IPAddress local_IP(192,168,5,1);
-  IPAddress gateway(192,168,5,1);
-  IPAddress subnet(255,255,255,0);
-
-  WiFi.softAPConfig(local_IP, gateway, subnet);
-
-  WiFi.softAP(ap_ssid,ap_password); 
 	/* Set page handler functions */
 	webserver.on("/", rootPageHandler);
 	webserver.on("/wlan_config", wlanPageHandler);
@@ -113,9 +102,9 @@ void wlanPageHandler()
 	{
 		response_message += "Status: Disconnected<br>";
 	}
-  response_message += "Local IP Adress:"+WiFi.localIP().toString()+"<br>";
-  response_message += "Gateway IP Adress:"+WiFi.subnetMask().toString()+"<br>";
-  response_message += "Gateway IP Adress:"+WiFi.gatewayIP().toString()+"<br><br>";
+  response_message += "Local Address: "+WiFi.localIP().toString()+"<br>";
+  response_message += "  Subnet Mask: "+WiFi.subnetMask().toString()+"<br>";
+  response_message += "GW IP Address: "+WiFi.gatewayIP().toString()+"<br><br>";
 
 	response_message += "<p>To connect to a WiFi network, please select a network...</p>";
 

@@ -13,7 +13,11 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 
-IPAddress serverIP(192,168,5,1);
+// Access point credentials
+const char *ap_ssid = "ShotClock";
+const char *ap_password = "12345678";
+
+IPAddress serverIP(192,168,6,1);
 uint16_t localPort = 1234;
 
 bool bConnect;
@@ -22,6 +26,13 @@ unsigned long last_connect;
 void setup(void) {
   Serial.begin(115200);
 
+  IPAddress local_IP(192,168,5,1);
+  IPAddress gateway(192,168,5,1);
+  IPAddress subnet(255,255,255,0);
+
+  WiFi.softAPConfig(local_IP, gateway, subnet);
+  WiFi.softAP(ap_ssid,ap_password); 
+  
   webserver_setup();
 
   bConnect = false;

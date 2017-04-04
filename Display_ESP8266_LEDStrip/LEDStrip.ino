@@ -1,14 +1,23 @@
 
+#include <Arduino.h>
+
+#if defined(ESP8266)
+#define FASTLED_ESP8266_RAW_PIN_ORDER
+#endif
 #include "FastLED.h"
 
-#define DATA_PIN    4 //GPIO2
+#if defined(ESP8266)
+#define DATA_PIN    4
+#else
+#define DATA_PIN    11
+#endif
 #define LED_TYPE    SK6812
 #define COLOR_ORDER RGB
 #define NUM_LEDS    56
 #define BRIGHTNESS  250
 #define FRAMES_PER_SECOND 5
 
-uint8_t pps = 4;            // number of Pixels Per Segment
+uint8_t pps = 2;            // number of Pixels Per Segment
 CHSV segON10(96, 255, 255); // color of 10s digit segments NOT TURNED RED
 CHSV segON(96, 255, 255);   // color of 1s digit segments
 

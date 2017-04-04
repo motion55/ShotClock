@@ -9,24 +9,10 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 
-// Access point credentials
-const char *ap_ssid = "Controller";
-const char *ap_password = "12345678";
-
-const char *server_ssid = "ShotClock";
-const char *server_password = "12345678";
-
 ESP8266WebServer webserver(80);
 
 void webserver_setup()
 {
-  IPAddress local_IP(192,168,6,1);
-  IPAddress gateway(192,168,6,1);
-  IPAddress subnet(255,255,255,0);
-
-  WiFi.softAPConfig(local_IP, gateway, subnet);
-
-  WiFi.softAP(ap_ssid,ap_password); 
   /* Set page handler functions */
   webserver.on("/", rootPageHandler);
   webserver.on("/wlan_config", wlanPageHandler);
@@ -34,10 +20,6 @@ void webserver_setup()
   webserver.onNotFound(handleNotFound);
 
   webserver.begin();
-
-  delay(1000);
-  WiFi.begin(server_ssid,server_password);
-  delay(3000);
 }
 
 inline void webserver_loop()
@@ -109,8 +91,6 @@ void wlanPageHandler()
       }
       delay(50);
     }
-    delay(1000);
-    webserver_setup();
   }
 
   String response_message = "";
@@ -128,9 +108,9 @@ void wlanPageHandler()
   {
     response_message += "<center>Status: Disconnected</center>";
   }
-  response_message += "<center>Local IP Adress:"+WiFi.localIP().toString()+"</center>";
-  response_message += "<center>Gateway IP Adress:"+WiFi.subnetMask().toString()+"</center>";
-  response_message += "<center>Gateway IP Adress:"+WiFi.gatewayIP().toString()+"</center><br>";
+  response_message += "<center>Local IP Address: "+WiFi.localIP().toString()+"</center>";
+  response_message += "<center>Subnet Mask: "+WiFi.subnetMask().toString()+"</center>";
+  response_message += "<center>GW IP Address: "+WiFi.gatewayIP().toString()+"</center><br>";
 
   response_message += "<center><p>To connect to a WiFi network, please select a network...</p></center>";
 
@@ -164,9 +144,7 @@ void wlanPageHandler()
   webserver.send(200, "text/html", response_message);
 }
 
-
 /*///////////////////////////////////////////////////////////////////////////*/
-#define _USE_BUTTON_  1
 
 void serverPageHandler()
 {
@@ -181,17 +159,9 @@ void serverPageHandler()
     localPort = (uint16_t)webserver.arg("portno").toInt();
   }
   
-#if _USE_BUTTON_
   if (webserver.hasArg("action"))
-#else
-  if (webserver.hasArg("gpio2"))
-#endif    
   {
-#if _USE_BUTTON_
     if (webserver.arg("action") == "Connect")
-#else
-    if (webserver.arg("gpio2") == "1")
-#endif    
     {
       serverConnect(true);
     }
@@ -218,9 +188,9 @@ void serverPageHandler()
     response_message += "<center>Status: Disconnected from server</center>";
     Connected = false;
   }
-  response_message += "<center>Local IP Adress:"+WiFi.localIP().toString()+"</center>";
-  response_message += "<center>Gateway IP Adress:"+WiFi.subnetMask().toString()+"</center>";
-  response_message += "<center>Gateway IP Adress:"+WiFi.gatewayIP().toString()+"</center><br>";
+  response_message += "<center>Local IP Address: "+WiFi.localIP().toString()+"</center>";
+  response_message += "<center>Subnet Mask: "+WiFi.subnetMask().toString()+"</center>";
+  response_message += "<center>GW IP Address: "+WiFi.gatewayIP().toString()+"</center><br>";
 
   response_message += "<form method=\"get\">";
   
@@ -235,7 +205,6 @@ void serverPageHandler()
 #endif
   if (Connected == false)
   {
-#if _USE_BUTTON_
     if (bConnect)
     {
       response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connecting\"></center>";
@@ -244,19 +213,10 @@ void serverPageHandler()
     {
       response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connect\"></center>";
     }
-#else   
-    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On</center><br>";
-    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off</center><br>";
-#endif    
   }
   else
   {
-#if _USE_BUTTON_
     response_message += "<center><input type=\"submit\" name=\"action\" value=\"Disconnect\"></center>";
-#else   
-    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>On</center><br>";
-    response_message += "<center><input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off</center><br>";
-#endif    
   }
   response_message += "</form>";
   
