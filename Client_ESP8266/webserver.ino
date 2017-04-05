@@ -31,7 +31,8 @@ inline void webserver_loop()
 void rootPageHandler()
 {
   String response_message = "<html><head><title>ESP8266 Webserver</title></head>";
-  response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>ESP8266 Webserver</center></h1>";
+  response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>ShotClock Display</center></h1>";
+  response_message += "<h2><center>Controller Client</center></h3>";
 
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -43,7 +44,7 @@ void rootPageHandler()
   }
 
   response_message += "<h4><center><a href=\"/wlan_config\">Configure WLAN settings</a></center></h4>";
-  response_message += "<h4><center><a href=\"/server\">Configure Server</a></center></h4>";
+  response_message += "<h4><center><a href=\"/server\">Configure Server settings</a></center></h4>";
   response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);

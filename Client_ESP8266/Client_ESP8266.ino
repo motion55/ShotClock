@@ -24,7 +24,7 @@ bool bConnect;
 unsigned long last_connect;
 
 void setup(void) {
-  Serial.begin(115200);
+  Serial.begin(19200);
 
   IPAddress local_IP(192,168,5,1);
   IPAddress gateway(192,168,5,1);
