@@ -46,7 +46,7 @@ void loop(void) {
 }
 
 WiFiClient wifiClient;
-#define _echo_commands_ 1
+#define _echo_commands_ 0
 
 void wifiClient_loop(void)
 {
@@ -58,9 +58,7 @@ void wifiClient_loop(void)
   {
     while (Serial.available()>0) {
       uint8_t b = Serial.read();
-#if (_echo_commands_==0)
       wifiClient.write(b);
-#endif    
     }
     while (wifiClient.available()>0) {
       uint8_t b = wifiClient.read();
