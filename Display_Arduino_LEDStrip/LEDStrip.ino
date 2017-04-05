@@ -1,7 +1,7 @@
 
 #include "FastLED.h"
 
-#define DATA_PIN    4
+#define DATA_PIN    11
 #define LED_TYPE    SK6812
 #define COLOR_ORDER RGB
 #define NUM_LEDS    56

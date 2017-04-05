@@ -72,6 +72,15 @@ void UpdateTime(void)
   }
 }
 
+void serialServer_loop(void)
+{
+  while (Serial.available()>0) {
+    unsigned char b = Serial.read();
+    Serial.write(b);  //pass to Arduino
+    ProcessCommand(b);
+  }
+}
+
 String Count_str;
 
 void ProcessCommand(char cmd) 
@@ -140,6 +149,7 @@ void my_delay_ms(int msec)
 	{
     UpdateTime();
     LEDStrip_loop();
+    serialServer_loop();
 		endWait = millis();
 	}
 }
