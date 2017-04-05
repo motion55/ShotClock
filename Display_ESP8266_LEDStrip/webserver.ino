@@ -9,8 +9,6 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 
-#include "FastLED.h"
-
 // Access point credentials
 const char *ap_ssid = "ShotClock";
 const char *ap_password = "12345678";

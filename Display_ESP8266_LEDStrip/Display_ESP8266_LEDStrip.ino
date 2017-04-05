@@ -10,8 +10,6 @@
 
 //#define DebugSerial Serial
 
-#include "FastLED.h"
-
 int Count_Val;
 int Count_Init;
 uint32_t prev_time;

@@ -7,7 +7,7 @@
 #include "FastLED.h"
 
 #if defined(ESP8266)
-#define DATA_PIN    4
+#define DATA_PIN    1
 #else
 #define DATA_PIN    11
 #endif
@@ -17,7 +17,7 @@
 #define BRIGHTNESS  250
 #define FRAMES_PER_SECOND 5
 
-uint8_t pps = 2;            // number of Pixels Per Segment
+uint8_t pps = 4;            // number of Pixels Per Segment
 CHSV segON10(96, 255, 255); // color of 10s digit segments NOT TURNED RED
 CHSV segON(96, 255, 255);   // color of 1s digit segments
 
@@ -43,7 +43,7 @@ void LEDStrip_setup()
 
 void LEDStrip_loop()
 {
-  FastLED.delay(20);
+  FastLED.delay(1);
 }
 
 void setSegments(uint8_t count) {
