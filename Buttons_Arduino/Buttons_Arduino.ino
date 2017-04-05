@@ -10,6 +10,8 @@
 const int StartStop = 5;  //Start og Stop  See instruction above
 const int Reset14 = 6;    //reset sa  14   i  sa ground
 const int Reset24 = 7;     //reset sa 24    i conect sa ground
+const int ResetENA = 8;
+const int StartStopENA = 9;
 const int StartStopLED = 10;
 
 int Na_set_na_Time = 24;
@@ -42,8 +44,6 @@ void setup() {
   pinMode(Reset14, INPUT_PULLUP);   
   pinMode(Reset24, INPUT_PULLUP); 
   
-  pinMode(StartStopLED, OUTPUT);
-  digitalWrite(StartStopLED, LOW);  
 }
 
 void loop() {
@@ -53,7 +53,14 @@ void loop() {
 //-----------------------------------------------------------------wifi CODES start
 
 void setUpWifiShield() {
-  digitalWrite(StartStopLED, HIGH);
+  pinMode(ResetENA, OUTPUT);
+  pinMode(StartStopENA, OUTPUT);
+  pinMode(StartStopLED, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(ResetENA, LOW);
+  digitalWrite(StartStopENA, HIGH);  
+  digitalWrite(StartStopLED, HIGH);  
+  digitalWrite(LED_BUILTIN, LOW);  
 }
 
 void SendTrytoSEND(String CommandData) 
@@ -95,6 +102,8 @@ void ShotClockTriggeringCodes() {
     {
       SendTrytoSEND("ZZ");
       Start = !Start;                                                        
+      digitalWrite(StartStopLED, LOW);
+      digitalWrite(LED_BUILTIN, HIGH);  
     }
   } 
   else 
@@ -104,6 +113,8 @@ void ShotClockTriggeringCodes() {
     {
       SendTrytoSEND("XX");
       Start = !Start;
+      digitalWrite(StartStopLED, HIGH);
+      digitalWrite(LED_BUILTIN, LOW);  
     }
   }
   
