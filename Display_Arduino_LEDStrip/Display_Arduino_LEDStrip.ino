@@ -8,9 +8,12 @@
 #include <avr/pgmspace.h>
 #endif
 
+#include <SoftwareSerial.h>
+
+SoftwareSerial ESPSerial(2,3);
+
 //#define DebugSerial Serial
 
-#include "FastLED.h"
 
 int Count_Val;
 int Count_Init;
@@ -20,7 +23,10 @@ bool Reset = false;
 bool Stop = true;
 
 void setup(void) {
-	Serial.begin(115200);
+	Serial.begin(19200);
+  ESPSerial.begin(19200);
+  pinMode(2,INPUT_PULLUP);
+  
   Stop = true;
   Count_Val = 240;
   Count_Init = 240;
@@ -76,7 +82,11 @@ void serialServer_loop(void)
 {
   while (Serial.available()>0) {
     unsigned char b = Serial.read();
-    Serial.write(b);  //pass to Arduino
+    Serial.write(b);  //echo
+    ProcessCommand(b);
+  }
+  while (ESPSerial.available()>0) {
+    unsigned char b = ESPSerial.read();
     ProcessCommand(b);
   }
 }
