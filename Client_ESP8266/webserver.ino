@@ -57,6 +57,7 @@ void wlanPageHandler()
   // Check if there are any GET parameters
   if (webserver.hasArg("ssid"))
   {
+    serverConnect(false); //First disconnect the client from the server.
     if (webserver.hasArg("password"))
     {
       WiFi.begin(webserver.arg("ssid").c_str(), webserver.arg("password").c_str());
