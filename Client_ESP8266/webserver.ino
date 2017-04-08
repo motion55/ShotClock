@@ -36,6 +36,11 @@ void rootPageHandler()
 
   if (WiFi.status() == WL_CONNECTED)
   {
+    if (bWiFiConnect)
+    {
+      bWiFiConnect = false;
+      serverConnect(true);
+    }
     response_message += "<h3><center>WLAN Status: Connected</center></h3>";
   }
   else
@@ -53,15 +58,15 @@ void rootPageHandler()
 /* WLAN page allows users to set the WiFi credentials */
 void wlanPageHandler()
 {
-  String passwd_str;
   // Check if there are any GET parameters
   if (webserver.hasArg("ssid"))
   {
     serverConnect(false); //First disconnect the client from the server.
+    sta_ssid = webserver.arg("ssid");
     if (webserver.hasArg("password"))
     {
-      WiFi.begin(webserver.arg("ssid").c_str(), webserver.arg("password").c_str());
-      passwd_str = webserver.arg("password");
+      //WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
+      sta_passwd = webserver.arg("password");
       #ifdef DebugSerial
       DebugSerial.print("Connecting to ");
       DebugSerial.print(webserver.arg("ssid"));
@@ -71,28 +76,16 @@ void wlanPageHandler()
     }
     else
     {
+      sta_passwd = "";
+      //WiFi.begin(webserver.arg("ssid").c_str());
       #ifdef DebugSerial
-      WiFi.begin(webserver.arg("ssid").c_str());
       DebugSerial.print("Connecting to ");
       DebugSerial.print(webserver.arg("ssid"));
       DebugSerial.print(" No Password.");
       #endif
     }
-
-    for (int i = 0; i<200; i++)
-    {
-      if (WiFi.status() == WL_CONNECTED)
-      {
-        #ifdef DebugSerial
-        DebugSerial.println("WiFi reconnected");
-        DebugSerial.println("Local IP address: ");
-        DebugSerial.println(WiFi.localIP());
-        #endif
-        serverIP = WiFi.gatewayIP();
-        break;
-      }
-      delay(50);
-    }
+    WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
+    bWiFiConnect = true;
   }
 
   String response_message = "";
@@ -105,10 +98,22 @@ void wlanPageHandler()
   if (WiFi.status() == WL_CONNECTED)
   {
     response_message += "<center>Status: Connected</center>";
+    if (bWiFiConnect)
+    {
+      bWiFiConnect = false;
+      serverConnect(true);
+    }
   }
   else
   {
-    response_message += "<center>Status: Disconnected</center>";
+    if (bWiFiConnect)
+    {
+      response_message += "<center>Status: Connecting</center>";
+    }
+    else
+    {
+      response_message += "<center>Status: Disconnected</center>";
+    }
   }
   response_message += "<center>Local IP Address: "+WiFi.localIP().toString()+"</center>";
   response_message += "<center>Subnet Mask: "+WiFi.subnetMask().toString()+"</center>";
@@ -136,7 +141,7 @@ void wlanPageHandler()
     }
 
     response_message += "<center>WiFi password (if required):</center>";
-    response_message += "<center><input type=\"text\" value=\""+passwd_str+"\" name=\"password\"></center><br>";
+    response_message += "<center><input type=\"text\" value=\""+sta_passwd+"\" name=\"password\"></center><br>";
     response_message += "<center><input type=\"submit\" value=\"Connect\"></center>";
     response_message += "</form>";
   }
@@ -178,17 +183,17 @@ void serverPageHandler()
 
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
-  bool Connected;
+  bool bConnected;
   
   if (wifiClient.connected())
   {
     response_message += "<center>Status: Connected to server</center>";
-    Connected = true;
+    bConnected = true;
   }
   else
   {
     response_message += "<center>Status: Disconnected from server</center>";
-    Connected = false;
+    bConnected = false;
   }
   response_message += "<center>Local IP Address: "+WiFi.localIP().toString()+"</center>";
   response_message += "<center>Subnet Mask: "+WiFi.subnetMask().toString()+"</center>";
@@ -205,9 +210,9 @@ void serverPageHandler()
 #if (_USE_BUTTON_==0)
   response_message += "<center>Server Connect</center>";
 #endif
-  if (Connected == false)
+  if (bConnected == false)
   {
-    if (bConnect)
+    if (bWiFiConnect)
     {
       response_message += "<center><input type=\"submit\" name=\"action\" value=\"Connecting\"></center>";
     }

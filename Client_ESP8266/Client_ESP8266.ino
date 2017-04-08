@@ -17,11 +17,15 @@
 const char *ap_ssid = "ShotClock";
 const char *ap_password = "12345678";
 
+String sta_ssid("Controller");
+String sta_passwd("12345678");
+
 IPAddress serverIP(192,168,6,1);
 uint16_t localPort = 1234;
 
-bool bConnect;
 unsigned long last_connect;
+bool bServerConnect;
+bool bWiFiConnect;
 
 void setup(void) {
   Serial.begin(19200);
@@ -33,9 +37,10 @@ void setup(void) {
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(ap_ssid,ap_password); 
   
+  bWiFiConnect = true;
   webserver_setup();
 
-  bConnect = false;
+  bServerConnect = false;
   last_connect = millis();
 }
 
@@ -52,10 +57,10 @@ void wifiClient_loop(void)
 {
   unsigned long curr_connect = millis();
   
-  if (WiFi.status()!=WL_CONNECTED) return;  
-  
   if (wifiClient.connected())
   {
+    last_connect = curr_connect;
+    
     while (Serial.available()>0) {
       uint8_t b = Serial.read();
       wifiClient.write(b);
@@ -63,22 +68,34 @@ void wifiClient_loop(void)
     while (wifiClient.available()>0) {
       uint8_t b = wifiClient.read();
       Serial.write(b);
-#if (_echo_commands_)
+    #if (_echo_commands_)
       wifiClient.write(b);
-#endif
+    #endif
     }
-    last_connect = curr_connect;
   }
   else
   {
-    if (curr_connect - last_connect >= 1000L)
+    if (curr_connect - last_connect >= 2000L)
     {
-      if (bConnect)
-      {
-        wifiClient.stop();
-        serverConnect(true);
-      }
       last_connect = curr_connect;
+      
+      if (WiFi.status()==WL_CONNECTED) 
+      {
+        if (bWiFiConnect)
+        {
+          bWiFiConnect = false;
+          serverConnect(true);
+        }
+        else if (bServerConnect)
+        {
+          wifiClient.stop();
+          serverConnect(true);
+        }
+      }
+      else
+      {
+        bServerConnect = false;
+      }
     }
   }
 }
@@ -87,7 +104,7 @@ void serverConnect(bool Connect)
 {
   if (Connect)
   {
-    bConnect = true;
+    bServerConnect = true;
     last_connect = millis();
     wifiClient.connect(serverIP, localPort);
     #ifdef DebugSerial
@@ -99,7 +116,7 @@ void serverConnect(bool Connect)
   }
   else
   {
-    bConnect = false;
+    bServerConnect = false;
     wifiClient.stop();
     #ifdef DebugSerial
     DebugSerial.print("Disconnected from server.");
