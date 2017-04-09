@@ -5,18 +5,13 @@
     pushbutton on pin 6 to GND with 10K pullup to +3.3V
     pushbutton on pin 7 to GND with 10K pullup to +3.3V
 */
-const int StartStop = 5;  //Start og Stop  See instruction above
-const int Reset14 = 6;    //reset sa  14   i  sa ground
-const int Reset24 = 7;    //reset sa 24    i conect sa ground
-const int ResetENA = 8;
-const int StartStopENA = 9;
-const int StartStopLED = 10;
+const int StartStop = D5;  //Start og Stop  See instruction above
+const int Reset14 = D6;    //reset sa  14   i  sa ground
+const int Reset24 = D7;    //reset sa 24    i conect sa ground
 
 int Na_set_na_Time = 24;
 bool StartStopCondi = false;
 bool Start = true;                                              
-//bool Reset = false;
-//bool Stop = true;
 
 int buttonState = LOW;
 unsigned long lastDebounceTime = 0;                             
@@ -31,14 +26,14 @@ unsigned long debounceDelay = 50;
 
 void setup() {
   ESP8266.begin(19200);
-  pinMode(2, INPUT_PULLUP);
   
   setUpWifiShield();
   
   pinMode(StartStop, INPUT_PULLUP);
   pinMode(Reset14, INPUT_PULLUP);
   pinMode(Reset24, INPUT_PULLUP);
-  
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);  
 }
 
 void loop() {
@@ -49,15 +44,6 @@ void loop() {
 //-----------------------------------------------------------------wifi CODES start
 
 void setUpWifiShield() {
-  pinMode(ResetENA, OUTPUT);
-  pinMode(StartStopENA, OUTPUT);
-  pinMode(StartStopLED, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(ResetENA, LOW);
-  digitalWrite(StartStopENA, HIGH);  
-  digitalWrite(StartStopLED, HIGH);  
-  digitalWrite(LED_BUILTIN, LOW);  
-
   Server_setup();
 }
 
@@ -67,6 +53,7 @@ void SendTrytoSEND(String CommandData)
   {
     uint8_t b = CommandData[i];
     ESP8266.write(b);
+    Send2Clients(b);
   }
 }
 
@@ -84,7 +71,7 @@ void ShotClockTriggeringCodes() {
     if (readingStartStop != buttonState) 
     {
       buttonState = readingStartStop;
-      if (buttonState == HIGH) 
+      if (buttonState == LOW)
       {
         StartStopCondi = !StartStopCondi;
       }
@@ -99,7 +86,6 @@ void ShotClockTriggeringCodes() {
     {
       SendTrytoSEND("ZZ");
       Start = !Start;                                                        
-      digitalWrite(StartStopLED, LOW);
       digitalWrite(LED_BUILTIN, HIGH);  
     }
   } 
@@ -110,7 +96,6 @@ void ShotClockTriggeringCodes() {
     {
       SendTrytoSEND("XX");
       Start = !Start;
-      digitalWrite(StartStopLED, HIGH);
       digitalWrite(LED_BUILTIN, LOW);  
     }
   }
