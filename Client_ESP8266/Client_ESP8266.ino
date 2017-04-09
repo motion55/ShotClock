@@ -8,7 +8,7 @@
 #include <avr/pgmspace.h>
 #endif
 
-//#define DebugSerial Serial
+#define DebugSerial Serial
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -28,7 +28,13 @@ bool bServerConnect;
 bool bWiFiConnect;
 
 void setup(void) {
+#ifdef DebugSerial
+  Serial.begin(115200);
+  DebugSerial.println();
+  DebugSerial.println("ShotClock initializing...");
+#else
   Serial.begin(19200);
+#endif  
 
   IPAddress local_IP(192,168,5,1);
   IPAddress gateway(192,168,5,1);
@@ -57,7 +63,7 @@ void wifiClient_loop(void)
 {
   unsigned long curr_connect = millis();
   
-  if (wifiClient.connected())
+  if ((WiFi.status()==WL_CONNECTED)&&(wifiClient.connected()))
   {
     last_connect = curr_connect;
     
@@ -83,8 +89,19 @@ void wifiClient_loop(void)
       {
         if (bWiFiConnect)
         {
+          #ifdef DebugSerial
+          DebugSerial.print("Connectinged ");
+          DebugSerial.println(sta_ssid);
+          #endif
           bWiFiConnect = false;
-          serverConnect(true);
+          if (WiFi.gatewayIP()==serverIP)
+          {
+            serverConnect(true);
+          }
+          else
+          {
+            serverConnect(false);
+          }
         }
         else if (bServerConnect)
         {
@@ -94,7 +111,10 @@ void wifiClient_loop(void)
       }
       else
       {
-        bServerConnect = false;
+        #ifdef DebugSerial
+        DebugSerial.write('.');
+        #endif
+        if (bServerConnect) serverConnect(false);
       }
     }
   }
@@ -119,7 +139,7 @@ void serverConnect(bool Connect)
     bServerConnect = false;
     wifiClient.stop();
     #ifdef DebugSerial
-    DebugSerial.print("Disconnected from server.");
+    DebugSerial.println("Disconnected from server.");
     #endif
   }
 }

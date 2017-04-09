@@ -36,11 +36,6 @@ void rootPageHandler()
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    if (bWiFiConnect)
-    {
-      bWiFiConnect = false;
-      serverConnect(true);
-    }
     response_message += "<h3><center>WLAN Status: Connected</center></h3>";
   }
   else
@@ -61,30 +56,29 @@ void wlanPageHandler()
   // Check if there are any GET parameters
   if (webserver.hasArg("ssid"))
   {
-    serverConnect(false); //First disconnect the client from the server.
+    serverConnect(false);
     sta_ssid = webserver.arg("ssid");
     if (webserver.hasArg("password"))
     {
-      //WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
       sta_passwd = webserver.arg("password");
+      WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
       #ifdef DebugSerial
       DebugSerial.print("Connecting to ");
-      DebugSerial.print(webserver.arg("ssid"));
+      DebugSerial.print(sta_ssid);
       DebugSerial.print(" Password:");
-      DebugSerial.println(passwd_str);
+      DebugSerial.println(sta_passwd);
       #endif
     }
     else
     {
       sta_passwd = "";
-      //WiFi.begin(webserver.arg("ssid").c_str());
+      WiFi.begin(sta_ssid.c_str());
       #ifdef DebugSerial
       DebugSerial.print("Connecting to ");
-      DebugSerial.print(webserver.arg("ssid"));
-      DebugSerial.print(" No Password.");
+      DebugSerial.print(sta_ssid);
+      DebugSerial.println("*No Password.*");
       #endif
     }
-    WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
     bWiFiConnect = true;
   }
 
@@ -98,11 +92,6 @@ void wlanPageHandler()
   if (WiFi.status() == WL_CONNECTED)
   {
     response_message += "<center>Status: Connected</center>";
-    if (bWiFiConnect)
-    {
-      bWiFiConnect = false;
-      serverConnect(true);
-    }
   }
   else
   {
@@ -207,9 +196,6 @@ void serverPageHandler()
   response_message += "<center>Port No.</center>";
   response_message += "<center><input type=\"text\" value=\""+String(localPort)+"\" name=\"portno\"></center><br>";
   
-#if (_USE_BUTTON_==0)
-  response_message += "<center>Server Connect</center>";
-#endif
   if (bConnected == false)
   {
     if (bWiFiConnect)
