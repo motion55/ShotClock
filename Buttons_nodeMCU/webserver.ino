@@ -9,8 +9,6 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h>
 
-#include "FastLED.h"
-
 ESP8266WebServer webserver(80);
 
 void webserver_setup()
@@ -80,12 +78,9 @@ void wlanPageHandler()
       #endif
         break;
       }
-      //LoadDisplayBuffer(Len);
-      FastLED.delay(50);
+      delay(50);
     }
-    //ResetScrollPos();
-    FastLED.delay(1000);
-    webserver_setup();
+    //webserver_setup();
   }
 
   String response_message = "";
