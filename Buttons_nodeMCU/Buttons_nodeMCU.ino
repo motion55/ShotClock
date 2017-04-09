@@ -1,0 +1,133 @@
+
+/*
+  The circuit:
+    pushbutton on pin 5 to GND with 10K pullup to +3.3V
+    pushbutton on pin 6 to GND with 10K pullup to +3.3V
+    pushbutton on pin 7 to GND with 10K pullup to +3.3V
+*/
+const int StartStop = 5;  //Start og Stop  See instruction above
+const int Reset14 = 6;    //reset sa  14   i  sa ground
+const int Reset24 = 7;    //reset sa 24    i conect sa ground
+const int ResetENA = 8;
+const int StartStopENA = 9;
+const int StartStopLED = 10;
+
+int Na_set_na_Time = 24;
+bool StartStopCondi = false;
+bool Start = true;                                              
+//bool Reset = false;
+//bool Stop = true;
+
+int buttonState = LOW;
+unsigned long lastDebounceTime = 0;                             
+unsigned long debounceDelay = 50;                               
+
+//--------------------------------------------------
+#include <SoftwareSerial.h>
+
+#define ESP8266 Serial
+
+//--------------------------------------------------
+
+void setup() {
+  ESP8266.begin(19200);
+  pinMode(2, INPUT_PULLUP);
+  
+  setUpWifiShield();
+  
+  pinMode(StartStop, INPUT_PULLUP);
+  pinMode(Reset14, INPUT_PULLUP);
+  pinMode(Reset24, INPUT_PULLUP);
+  
+}
+
+void loop() {
+  ShotClockTriggeringCodes(); 
+  Server_loop();
+}
+
+//-----------------------------------------------------------------wifi CODES start
+
+void setUpWifiShield() {
+  pinMode(ResetENA, OUTPUT);
+  pinMode(StartStopENA, OUTPUT);
+  pinMode(StartStopLED, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(ResetENA, LOW);
+  digitalWrite(StartStopENA, HIGH);  
+  digitalWrite(StartStopLED, HIGH);  
+  digitalWrite(LED_BUILTIN, LOW);  
+
+  Server_setup();
+}
+
+void SendTrytoSEND(String CommandData) 
+{
+  for (int i=0; i<CommandData.length(); i++)
+  {
+    uint8_t b = CommandData[i];
+    ESP8266.write(b);
+  }
+}
+
+void ShotClockTriggeringCodes() {
+
+  int readingStartStop = digitalRead(StartStop);
+  int readingReset14 = digitalRead(Reset14);
+  int readingReset24 = digitalRead(Reset24);
+
+  //--------------------------------debounce start-------Start  Stop  button--------
+  unsigned long CurrentTime = millis();                      
+  
+  if ((CurrentTime - lastDebounceTime) > debounceDelay) 
+  { 
+    if (readingStartStop != buttonState) 
+    {
+      buttonState = readingStartStop;
+      if (buttonState == HIGH) 
+      {
+        StartStopCondi = !StartStopCondi;
+      }
+      lastDebounceTime = CurrentTime;
+    }
+  }
+
+  if (StartStopCondi) 
+  {
+    // Start condition
+    if (Start) 
+    {
+      SendTrytoSEND("ZZ");
+      Start = !Start;                                                        
+      digitalWrite(StartStopLED, LOW);
+      digitalWrite(LED_BUILTIN, HIGH);  
+    }
+  } 
+  else 
+  {
+    //Stop condition
+    if (!Start) 
+    {
+      SendTrytoSEND("XX");
+      Start = !Start;
+      digitalWrite(StartStopLED, HIGH);
+      digitalWrite(LED_BUILTIN, LOW);  
+    }
+  }
+  
+  //---------------------------------debounce end-------Start  Stop  Button-------
+
+  //-------------------------------------------------------reset14 and reset24 START------------------
+  if (readingReset14 == LOW) {
+    SendTrytoSEND("Q14");             //to reset 14
+    delay(100);
+  }
+  if (readingReset24 == LOW) {
+    SendTrytoSEND("Q24");               //to reset 24
+    delay(100);
+  }
+  //-------------------------------------------------------reset14 and reset24 END------------------
+
+}
+
+
