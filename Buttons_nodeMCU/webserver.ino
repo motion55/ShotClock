@@ -147,12 +147,12 @@ void gpioPageHandler()
     if (webserver.arg("gpio2") == "1")
     {
       Stop = false;
-      Send2Clients('Z');
+      Send2Clients(String("ZZZ"));;
     }
     else
     {
       Stop = true;
-      Send2Clients('X');
+      Send2Clients(String("XXX"));
     }
   }
 
