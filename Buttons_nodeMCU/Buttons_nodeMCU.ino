@@ -18,9 +18,10 @@ unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;                               
 
 //--------------------------------------------------
-#include <SoftwareSerial.h>
 
 #define ESP8266 Serial
+#define LED_ON  digitalWrite(LED_BUILTIN, LOW)
+#define LED_OFF digitalWrite(LED_BUILTIN, HIGH)
 
 //--------------------------------------------------
 
@@ -33,7 +34,7 @@ void setup() {
   pinMode(Reset14, INPUT_PULLUP);
   pinMode(Reset24, INPUT_PULLUP);
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);  
+  LED_OFF;
 }
 
 void loop() {
@@ -49,11 +50,11 @@ void setUpWifiShield() {
 
 void SendTrytoSEND(String CommandData) 
 {
+  Send2Clients(CommandData);
   for (int i=0; i<CommandData.length(); i++)
   {
     uint8_t b = CommandData[i];
     ESP8266.write(b);
-    Send2Clients(b);
   }
 }
 
@@ -86,7 +87,7 @@ void ShotClockTriggeringCodes() {
     {
       SendTrytoSEND("ZZ");
       Start = !Start;                                                        
-      digitalWrite(LED_BUILTIN, HIGH);  
+      LED_ON;
     }
   } 
   else 
@@ -96,7 +97,7 @@ void ShotClockTriggeringCodes() {
     {
       SendTrytoSEND("XX");
       Start = !Start;
-      digitalWrite(LED_BUILTIN, LOW);  
+      LED_OFF;
     }
   }
   

@@ -92,13 +92,17 @@ void wifiServer_loop(void)
   }
 }
 
-void Send2Clients(uint8_t dat)
+void Send2Clients(String DataStr)
 {
   for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++)
   {
     if (wifiClients[i] && wifiClients[i].connected())
     {
-      wifiClients[i].write(dat);
+      for (uint8_t j = 0; j < DataStr.length(); j++)
+      {
+        uint8_t dat = DataStr[j];
+        wifiClients[i].write(dat);
+      }
       delay(1);
     }
   }
