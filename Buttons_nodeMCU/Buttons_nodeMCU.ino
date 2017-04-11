@@ -50,11 +50,11 @@ void setUpWifiShield() {
 
 void SendTrytoSEND(String CommandData) 
 {
-  Send2Clients(CommandData);
   for (int i=0; i<CommandData.length(); i++)
   {
     uint8_t b = CommandData[i];
     ESPSerial.write(b);
+    Send2Clients(b);
   }
 }
 
