@@ -30,7 +30,7 @@ inline void webserver_loop()
 /* Root page for the webserver */
 void rootPageHandler()
 {
-  String response_message = "<html><head><title>ESP8266 Webserver</title></head>";
+  String response_message = "<html><head><title>Buttons Controller Server</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Button Controller</center></h1>";
   response_message += "<h2><center>Controller Server</center></h3>";
 
@@ -81,11 +81,13 @@ void wlanPageHandler()
       delay(50);
     }
     //webserver_setup();
+    wifiServer.begin();
+    wifiServer.setNoDelay(true);
   }
 
   String response_message = "";
   response_message += "<html>";
-  response_message += "<head><title>ESP8266 Webserver</title></head>";
+  response_message += "<head><title>Buttons Controller Server</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
 
   response_message += "<ul><li><a href=\"/\">Return to main page</a></li></ul>";
@@ -169,7 +171,7 @@ void gpioPageHandler()
   
   /*//////////////////////////////////////////////////////////////*/ 
 
-  String response_message = "<html><head><title>ESP8266 Webserver</title></head>";
+  String response_message = "<html><head><title>Buttons Controller Server</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Control GPIO pins</center></h1>";
   response_message += "<form method=\"get\">";
 

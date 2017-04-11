@@ -20,7 +20,7 @@ const char *ap_password = "12345678";
 unsigned int localPort = 1234;
 WiFiServer wifiServer(localPort);
 
-#define MAX_SRV_CLIENTS 2
+#define MAX_SRV_CLIENTS 3
 WiFiClient wifiClients[MAX_SRV_CLIENTS];
 
 void Server_setup(void) {
@@ -70,16 +70,16 @@ void wifiServer_loop(void)
       if(wifiClients[i].available())
       {
         //get data from the telnet client and push it to the UART
-        while(wifiClients[i].available()) Serial.write(wifiClients[i].read());
+        while(wifiClients[i].available()) ESPSerial.write(wifiClients[i].read());
       }
     }
   }
   //check UART for data
-  if(Serial.available())
+  size_t len = ESPSerial.available();
+  if(len>0)
   {
-    size_t len = Serial.available();
     uint8_t sbuf[len];
-    Serial.readBytes(sbuf,len);
+    ESPSerial.readBytes(sbuf,len);
     //push UART data to all connected telnet clients
     for(i = 0; i < MAX_SRV_CLIENTS; i++)
     {

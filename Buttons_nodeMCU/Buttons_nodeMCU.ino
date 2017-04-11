@@ -19,14 +19,14 @@ unsigned long debounceDelay = 50;
 
 //--------------------------------------------------
 
-#define ESP8266 Serial
+#define ESPSerial Serial
 #define LED_ON  digitalWrite(LED_BUILTIN, LOW)
 #define LED_OFF digitalWrite(LED_BUILTIN, HIGH)
 
 //--------------------------------------------------
 
 void setup() {
-  ESP8266.begin(19200);
+  ESPSerial.begin(19200);
   
   setUpWifiShield();
   
@@ -54,7 +54,7 @@ void SendTrytoSEND(String CommandData)
   for (int i=0; i<CommandData.length(); i++)
   {
     uint8_t b = CommandData[i];
-    ESP8266.write(b);
+    ESPSerial.write(b);
   }
 }
 
