@@ -20,6 +20,11 @@ void webserver_setup()
   webserver.onNotFound(handleNotFound);
 
   webserver.begin();
+
+  bWiFiConnect = true;
+  bServerConnect = false;
+  last_connect = millis();
+  interval = 5000L;
 }
 
 inline void webserver_loop()
@@ -79,8 +84,8 @@ void wlanPageHandler()
       DebugSerial.println("*No Password.*");
       #endif
     }
-    //bWiFiConnect = true;
-
+    webserver_setup();
+#if 0
     for (int i = 0; i<200; i++)
     {
       if (WiFi.status() == WL_CONNECTED)
@@ -95,6 +100,7 @@ void wlanPageHandler()
       }
       delay(50);
     }
+#endif    
   }
 
   String response_message = "";
