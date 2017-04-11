@@ -30,7 +30,7 @@ inline void webserver_loop()
 /* Root page for the webserver */
 void rootPageHandler()
 {
-  String response_message = "<html><head><title>ESP8266 Webserver</title></head>";
+  String response_message = "<html><head><title>ShotClock Display Client</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>ShotClock Display</center></h1>";
   response_message += "<h2><center>Controller Client</center></h3>";
 
@@ -79,29 +79,44 @@ void wlanPageHandler()
       DebugSerial.println("*No Password.*");
       #endif
     }
-    bWiFiConnect = true;
+    //bWiFiConnect = true;
+
+    for (int i = 0; i<200; i++)
+    {
+      if (WiFi.status() == WL_CONNECTED)
+      {
+        #ifdef DebugSerial
+        DebugSerial.println("WiFi reconnected");
+        DebugSerial.println("Local IP address: ");
+        DebugSerial.println(WiFi.localIP());
+        #endif
+        serverIP = WiFi.gatewayIP();
+        break;
+      }
+      delay(50);
+    }
   }
 
   String response_message = "";
   response_message += "<html>";
-  response_message += "<head><title>WLAN Settings</title></head>";
+  response_message += "<head><title>ShotClock Display Client</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
   
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    response_message += "<center>Status: Connected</center>";
+    response_message += "<center>WiFi Status: Connected</center>";
   }
   else
   {
     if (bWiFiConnect)
     {
-      response_message += "<center>Status: Connecting</center>";
+      response_message += "<center>WiFi Status: Connecting</center>";
     }
     else
     {
-      response_message += "<center>Status: Disconnected</center>";
+      response_message += "<center>WiFi Status: Disconnected</center>";
     }
   }
   response_message += "<center>Local IP Address: "+WiFi.localIP().toString()+"</center>";
@@ -167,7 +182,7 @@ void serverPageHandler()
     }
   }
 
-  String response_message = "<html><head><title>Configure Server</title></head>";
+  String response_message = "<html><head><title>ShotClock Display Client</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Configure Server</center></h1>";
 
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";

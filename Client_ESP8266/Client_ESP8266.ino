@@ -29,7 +29,7 @@ bool bWiFiConnect;
 
 void setup(void) {
 #ifdef DebugSerial
-  Serial.begin(115200);
+  Serial.begin(19200);
   DebugSerial.println();
   DebugSerial.println("ShotClock initializing...");
 #else
