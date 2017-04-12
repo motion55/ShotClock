@@ -24,7 +24,8 @@ void webserver_setup()
   bWiFiConnect = true;
   bServerConnect = false;
   last_connect = millis();
-  interval = 5000L;
+  interval = WIFI_CONNECT_INTERVAL;
+  Reconnect = 0;
 }
 
 inline void webserver_loop()
@@ -39,7 +40,7 @@ void rootPageHandler()
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>ShotClock Display</center></h1>";
   response_message += "<h2><center>Controller Client</center></h3>";
 
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.isConnected())
   {
     response_message += "<h3><center>WLAN Status: Connected</center></h3>";
   }
@@ -59,48 +60,51 @@ void rootPageHandler()
 void wlanPageHandler()
 {
   // Check if there are any GET parameters
+  bool bChange = false;
   if (webserver.hasArg("ssid"))
   {
-    serverConnect(false);
-    sta_ssid = webserver.arg("ssid");
+    if (sta_ssid!=webserver.arg("ssid"))
+    {
+      sta_ssid = webserver.arg("ssid");
+      bChange = true;
+    }
     if (webserver.hasArg("password"))
     {
-      sta_passwd = webserver.arg("password");
-      WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
+      if (sta_passwd!=webserver.arg("password"))
+      {
+        sta_passwd = webserver.arg("password");
+        bChange = true;
+      }
+    }
+    else
+    {
+      if (sta_passwd.length()>0) 
+      {
+        sta_passwd = "";
+        bChange = true;
+      }
+    }
+    
+    if ((!bWiFiConnect)||bChange)
+    {
+      if (bServerConnect) serverConnect(false);
+      
+      if (sta_passwd.length()>0)
+      {
+        WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
+      }
+      else
+      {
+        WiFi.begin(sta_ssid.c_str());
+      }
       #ifdef DebugSerial
-      DebugSerial.print("Connecting to ");
+      DebugSerial.print("Connecting to SSID:");
       DebugSerial.print(sta_ssid);
       DebugSerial.print(" Password:");
       DebugSerial.println(sta_passwd);
       #endif
+      webserver_setup();
     }
-    else
-    {
-      sta_passwd = "";
-      WiFi.begin(sta_ssid.c_str());
-      #ifdef DebugSerial
-      DebugSerial.print("Connecting to ");
-      DebugSerial.print(sta_ssid);
-      DebugSerial.println("*No Password.*");
-      #endif
-    }
-    webserver_setup();
-#if 0
-    for (int i = 0; i<200; i++)
-    {
-      if (WiFi.status() == WL_CONNECTED)
-      {
-        #ifdef DebugSerial
-        DebugSerial.println("WiFi reconnected");
-        DebugSerial.println("Local IP address: ");
-        DebugSerial.println(WiFi.localIP());
-        #endif
-        serverIP = WiFi.gatewayIP();
-        break;
-      }
-      delay(50);
-    }
-#endif    
   }
 
   String response_message = "";
@@ -110,7 +114,7 @@ void wlanPageHandler()
   
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";
 
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.isConnected())
   {
     response_message += "<center>WiFi Status: Connected</center>";
   }
@@ -144,7 +148,14 @@ void wlanPageHandler()
     // Show access points
     for (uint8_t ap_idx = 0; ap_idx < ap_count; ap_idx++)
     {
-      response_message += "<center><input type=\"radio\" name=\"ssid\" value=\"" + String(WiFi.SSID(ap_idx)) + "\">";
+      if (String(WiFi.SSID(ap_idx))==sta_ssid)
+      {
+        response_message += "<center><input type=\"radio\" name=\"ssid\" value=\"" + String(WiFi.SSID(ap_idx)) + "\" checked>";
+      }
+      else
+      {
+        response_message += "<center><input type=\"radio\" name=\"ssid\" value=\"" + String(WiFi.SSID(ap_idx)) + "\">";
+      }
       response_message += String(WiFi.SSID(ap_idx)) + " (RSSI: " + WiFi.RSSI(ap_idx) + ")";
       (WiFi.encryptionType(ap_idx) == ENC_TYPE_NONE) ? response_message += " " : response_message += "*";
       response_message += "</center><br>";

@@ -8,7 +8,7 @@
 #include <avr/pgmspace.h>
 #endif
 
-#define DebugSerial Serial
+//#define DebugSerial Serial
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -23,21 +23,19 @@ String sta_passwd("12345678");
 IPAddress serverIP(192,168,6,1);
 uint16_t localPort = 1234;
 
+#define SERVER_CONNECT_INTERVAL 2000L
+#define WIFI_CONNECT_INTERVAL   5000L
+#define MAX_RECONNECT 2
+
+int Reconnect;
 unsigned long last_connect;
-unsigned long interval = 5000L;
+unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bServerConnect;
 bool bWiFiConnect;
 
 void setup(void) {
   Serial.begin(19200);
   
-#ifdef DebugSerial
-  DebugSerial.println();
-  DebugSerial.println("ShotClock initializing...");
-  DebugSerial.print("Connecting to SSID:");
-  DebugSerial.println(WiFi.SSID());
-#endif  
-
   IPAddress local_IP(192,168,5,1);
   IPAddress gateway(192,168,5,1);
   IPAddress subnet(255,255,255,0);
@@ -45,6 +43,19 @@ void setup(void) {
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(ap_ssid,ap_password); 
   
+  if (WiFi.SSID().length()>0)
+  {
+    sta_ssid = WiFi.SSID();
+    sta_passwd = WiFi.psk();
+  }
+#ifdef DebugSerial
+  DebugSerial.println();
+  DebugSerial.println("ShotClock initializing...");
+  DebugSerial.print("Connecting to SSID:");
+  DebugSerial.print(WiFi.SSID());
+  DebugSerial.print("-Password:");
+  DebugSerial.println(WiFi.psk());
+#endif  
   webserver_setup();
 }
 
@@ -60,8 +71,10 @@ WiFiClient wifiClient;
 void wifiClient_loop(void)
 {
   unsigned long curr_connect = millis();
+  bool bWiFiConnected = WiFi.isConnected();
+  bool bClientConnected = wifiClient.connected();
   
-  if ((WiFi.status()==WL_CONNECTED)&&(wifiClient.connected()))
+  if (bWiFiConnected&&bClientConnected)
   {
     last_connect = curr_connect;
     
@@ -83,7 +96,7 @@ void wifiClient_loop(void)
     {
       last_connect = curr_connect;
       
-      if (WiFi.status()==WL_CONNECTED) 
+      if (bWiFiConnected) 
       {
         if (bWiFiConnect)
         {
@@ -103,6 +116,7 @@ void wifiClient_loop(void)
           else
           {
             serverConnect(false);
+            serverIP = WiFi.gatewayIP();
           }
         }
         else if (bServerConnect)
@@ -111,14 +125,24 @@ void wifiClient_loop(void)
           serverConnect(true);
         }
       }
-      else
+      else 
       {
-        interval = 5000L;
+        interval = WIFI_CONNECT_INTERVAL;
         #ifdef DebugSerial
         DebugSerial.write('.');
         #endif
-        WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
-        if (bServerConnect) serverConnect(false);
+        if (Reconnect<MAX_RECONNECT)
+        {
+          #ifdef DebugSerial
+          DebugSerial.print("Reconnect to SSID:");
+          DebugSerial.print(sta_ssid);
+          DebugSerial.print(" Password:");
+          DebugSerial.println(sta_passwd);
+          #endif
+          Reconnect++;
+          interval += WIFI_CONNECT_INTERVAL*Reconnect;
+          WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
+        }
       }
     }
   }
@@ -130,7 +154,7 @@ void serverConnect(bool Connect)
   {
     bServerConnect = true;
     last_connect = millis();
-    interval = 2000L;
+    interval = SERVER_CONNECT_INTERVAL;
     wifiClient.connect(serverIP, localPort);
     #ifdef DebugSerial
     DebugSerial.print("Connecting to ");
