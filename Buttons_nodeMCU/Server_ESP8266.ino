@@ -12,16 +12,31 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include <WiFiUdp.h>
 
 // Access point credentials
 const char *ap_ssid = "Controller";
 const char *ap_password = "12345678";
 
+String sta_ssid;
+String sta_passwd;
+
 unsigned int localPort = 1234;
 WiFiServer wifiServer(localPort);
 
-#define MAX_SRV_CLIENTS 3
+#define MAX_SRV_CLIENTS 2
 WiFiClient wifiClients[MAX_SRV_CLIENTS];
+
+#define WIFI_CONNECT_INTERVAL   5000L
+#define MAX_RECONNECT 2
+
+int Reconnect;
+unsigned long last_connect;
+unsigned long interval = WIFI_CONNECT_INTERVAL;
+bool bWiFiConnect;
+
+// A UDP instance to let us send and receive packets over UDP
+WiFiUDP udp;
 
 void Server_setup(void) {
   IPAddress local_IP(192,168,6,1);
@@ -31,10 +46,20 @@ void Server_setup(void) {
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(ap_ssid,ap_password); 
 
+  if (WiFi.SSID().length()>0)
+  {
+    sta_ssid = WiFi.SSID();
+    sta_passwd = WiFi.psk();
+  }
+#ifdef DebugSerial
+  DebugSerial.println();
+  DebugSerial.println("ShotClock initializing...");
+  DebugSerial.print("Connecting to SSID:");
+  DebugSerial.print(WiFi.SSID());
+  DebugSerial.print("-Password:");
+  DebugSerial.println(WiFi.psk());
+#endif  
   webserver_setup();
-
-  wifiServer.begin();
-  wifiServer.setNoDelay(true);
 }
 
 void Server_loop(void) {
@@ -49,7 +74,8 @@ void wifiServer_loop(void)
   //check if there are any new clients
   if (wifiServer.hasClient())
   {
-    for(i = 0; i < MAX_SRV_CLIENTS; i++){
+    for(i = 0; i < MAX_SRV_CLIENTS; i++)
+    {
       //find free/disconnected spot
       if (!wifiClients[i] || !wifiClients[i].connected())
       {
@@ -106,10 +132,25 @@ void Send2Clients(uint8_t dat)
 
 void Send2ClientStr(String DataStr)
 {
-  for (uint8_t j = 0; j < DataStr.length(); j++)
+  for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++)
   {
-    uint8_t dat = DataStr[j];
-    Send2Clients(dat);
+    if (wifiClients[i] && wifiClients[i].connected())
+    {
+      wifiClients[i].write(DataStr.c_str(), DataStr.length());
+      delay(1);
+    }
+  }
+}
+
+void Send2UDPStr(String DataStr)
+{
+  if (WiFi.isConnected())
+  {
+    IPAddress address = WiFi.localIP();
+    address[3] = 0xFF;
+    udp.beginPacket(address, localPort);
+    udp.write(DataStr.c_str(), DataStr.length());
+    udp.endPacket();
   }
 }
 

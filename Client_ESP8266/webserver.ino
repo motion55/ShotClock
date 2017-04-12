@@ -192,6 +192,7 @@ void serverPageHandler()
     if (webserver.arg("action") == "Connect")
     {
       serverConnect(true);
+      Reconnect = 0;
     }
     else
     {

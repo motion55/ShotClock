@@ -8,10 +8,11 @@
 #include <avr/pgmspace.h>
 #endif
 
-//#define DebugSerial Serial
+#define DebugSerial Serial
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include <WiFiUdp.h>
 
 // Access point credentials
 const char *ap_ssid = "ShotClock";
@@ -32,6 +33,9 @@ unsigned long last_connect;
 unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bServerConnect;
 bool bWiFiConnect;
+
+// A UDP instance to let us send and receive packets over UDP
+WiFiUDP udp;
 
 void setup(void) {
   Serial.begin(19200);
@@ -57,6 +61,13 @@ void setup(void) {
   DebugSerial.println(WiFi.psk());
 #endif  
   webserver_setup();
+
+  udp.begin(localPort);
+#ifdef DebugSerial
+  DebugSerial.print("Starting UDP ");
+  DebugSerial.print("Local port: ");
+  DebugSerial.println(udp.localPort());
+#endif  
 }
 
 void loop(void) {
@@ -68,11 +79,25 @@ void loop(void) {
 WiFiClient wifiClient;
 #define _echo_commands_ 0
 
+#define RCV_PACKET_SIZE  32
+
 void wifiClient_loop(void)
 {
   unsigned long curr_connect = millis();
   bool bWiFiConnected = WiFi.isConnected();
   bool bClientConnected = wifiClient.connected();
+  
+  if (bWiFiConnected)
+  {
+    int cb = udp.parsePacket();
+    if (cb>0)
+    {
+      byte packetBuffer[RCV_PACKET_SIZE];
+      if (cb>RCV_PACKET_SIZE) cb = RCV_PACKET_SIZE;
+      udp.read(packetBuffer, cb);
+      Serial.write(packetBuffer, cb);
+    }
+  }
   
   if (bWiFiConnected&&bClientConnected)
   {
@@ -112,6 +137,7 @@ void wifiClient_loop(void)
           if (WiFi.gatewayIP()==serverIP)
           {
             serverConnect(true);
+            Reconnect = 0;
           }
           else
           {
@@ -121,8 +147,13 @@ void wifiClient_loop(void)
         }
         else if (bServerConnect)
         {
-          wifiClient.stop();
-          serverConnect(true);
+          if (Reconnect<MAX_RECONNECT)
+          {
+            wifiClient.stop();
+            serverConnect(true);
+            Reconnect++;
+            interval += SERVER_CONNECT_INTERVAL*Reconnect;
+          }
         }
       }
       else 

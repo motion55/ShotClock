@@ -10,8 +10,7 @@ const int Reset14 = D6;    //reset sa  14   i  sa ground
 const int Reset24 = D7;    //reset sa 24    i conect sa ground
 
 int Na_set_na_Time = 24;
-bool StartStopCondi = false;
-bool Start = true;                                              
+bool Stop = true;                                              
 
 int buttonState = LOW;
 unsigned long lastDebounceTime = 0;                             
@@ -50,11 +49,12 @@ void setUpWifiShield() {
 
 void SendTrytoSEND(String CommandData) 
 {
+  Send2UDPStr(CommandData);
+  Send2ClientStr(CommandData);
   for (int i=0; i<CommandData.length(); i++)
   {
     uint8_t b = CommandData[i];
     ESPSerial.write(b);
-    Send2Clients(b);
   }
 }
 
@@ -74,34 +74,22 @@ void ShotClockTriggeringCodes() {
       buttonState = readingStartStop;
       if (buttonState == LOW)
       {
-        StartStopCondi = !StartStopCondi;
+        if (Stop) 
+        {
+          Stop = false;
+          LED_ON;
+          SendTrytoSEND("ZZ");
+        }
+        else
+        {
+          Stop = true;
+          LED_OFF;
+          SendTrytoSEND("XX");
+        }
       }
       lastDebounceTime = CurrentTime;
     }
   }
-
-  if (StartStopCondi) 
-  {
-    // Start condition
-    if (Start) 
-    {
-      SendTrytoSEND("ZZ");
-      Start = !Start;                                                        
-      LED_ON;
-    }
-  } 
-  else 
-  {
-    //Stop condition
-    if (!Start) 
-    {
-      SendTrytoSEND("XX");
-      Start = !Start;
-      LED_OFF;
-    }
-  }
-  
-  //---------------------------------debounce end-------Start  Stop  Button-------
 
   //-------------------------------------------------------reset14 and reset24 START------------------
   if (readingReset14 == LOW) {
