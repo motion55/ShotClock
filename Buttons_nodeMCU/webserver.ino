@@ -128,7 +128,14 @@ void wlanPageHandler()
   }
   else
   {
-    response_message += "WLAN Status: Disconnected<br>";
+    if (bWiFiConnect)
+    {
+      response_message += "WLAN Status: Connecting<br>";
+    }
+    else
+    {
+      response_message += "WLAN Status: Disconnected<br>";
+    }
   }
   response_message += "Local Address: "+WiFi.localIP().toString()+"<br>";
   response_message += "  Subnet Mask: "+WiFi.subnetMask().toString()+"<br>";
