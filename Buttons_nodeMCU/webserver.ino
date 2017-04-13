@@ -186,6 +186,7 @@ void gpioPageHandler()
       LED_OFF;
       dataStr = "XXX";
     }
+    Send2UDPStr((const uint8_t *)dataStr.c_str(), dataStr.length());
     Send2ClientStr((const uint8_t *)dataStr.c_str(), dataStr.length());
   }
 
