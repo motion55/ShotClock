@@ -109,7 +109,15 @@ void wlanPageHandler()
 
   String response_message = "";
   response_message += "<html>";
-  response_message += "<head><title>Buttons Controller Server</title></head>";
+  if (bWiFiConnect)
+  {
+    response_message += "<head><title>ShotClock Display Client</title>";
+    response_message += "<meta http-equiv=\"refresh\" content=\"10; url=/wlan_config\"></head>";
+  }
+  else
+  {
+    response_message += "<head><title>ShotClock Display Client</title></head>";
+  }
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
 
   response_message += "<ul><li><a href=\"/\">Return to main page</a></li></ul>";
