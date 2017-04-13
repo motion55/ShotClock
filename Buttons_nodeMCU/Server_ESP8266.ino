@@ -53,7 +53,7 @@ void Server_setup(void) {
   }
 #ifdef DebugSerial
   DebugSerial.println();
-  DebugSerial.println("ShotClock initializing...");
+  DebugSerial.println("Controller initializing...");
   DebugSerial.print("Connecting to SSID:");
   DebugSerial.print(WiFi.SSID());
   DebugSerial.print("-Password:");
@@ -74,6 +74,7 @@ void wifiServer_loop(void)
   //check if there are any new clients
   if (wifiServer.hasClient())
   {
+    bool result = false;
     for(i = 0; i < MAX_SRV_CLIENTS; i++)
     {
       //find free/disconnected spot
@@ -81,12 +82,16 @@ void wifiServer_loop(void)
       {
         if(wifiClients[i]) wifiClients[i].stop();
         wifiClients[i] = wifiServer.available();
-        continue;
+        result = true;
+        break;
       }
     }
     //no free/disconnected spot so reject
-    WiFiClient serverClient = wifiServer.available();
-    serverClient.stop();
+    if (!result)
+    {
+      WiFiClient serverClient = wifiServer.available();
+      serverClient.stop();
+    }
   }
   //check clients for data
   for(i = 0; i < MAX_SRV_CLIENTS; i++)
@@ -107,12 +112,43 @@ void wifiServer_loop(void)
     uint8_t sbuf[len];
     ESPSerial.readBytes(sbuf,len);
     //push UART data to all connected telnet clients
-    for(i = 0; i < MAX_SRV_CLIENTS; i++)
+    Send2UDPStr(sbuf, len);
+    Send2ClientStr(sbuf, len);
+  }
+
+  if (bWiFiConnect)
+  {
+    unsigned long curr_connect = millis();
+    if (curr_connect - last_connect >= interval)
     {
-      if (wifiClients[i] && wifiClients[i].connected())
+      last_connect = curr_connect;
+      interval = WIFI_CONNECT_INTERVAL;
+      if (WiFi.isConnected())
       {
-        wifiClients[i].write(sbuf,len);
-        delay(1);
+        #ifdef DebugSerial
+        DebugSerial.print("WLAN Connected to ");
+        DebugSerial.println(sta_ssid);
+        #endif
+        bWiFiConnect = false;
+      }
+      else
+      {
+        if (Reconnect<MAX_RECONNECT)
+        {
+          #ifdef DebugSerial
+          DebugSerial.print("Reconnect to SSID:");
+          DebugSerial.print(sta_ssid);
+          DebugSerial.print(" Password:");
+          DebugSerial.println(sta_passwd);
+          #endif
+          Reconnect++;
+          interval += WIFI_CONNECT_INTERVAL*Reconnect;
+          WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
+        }
+        else
+        {
+          bWiFiConnect = false;
+        }
       }
     }
   }
@@ -130,27 +166,23 @@ void Send2Clients(uint8_t dat)
   }
 }
 
-void Send2ClientStr(String DataStr)
+void Send2ClientStr(const uint8_t *buf, size_t len)
 {
   for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++)
   {
     if (wifiClients[i] && wifiClients[i].connected())
     {
-      wifiClients[i].write(DataStr.c_str(), DataStr.length());
+      wifiClients[i].write(buf, len);
       delay(1);
     }
   }
 }
 
-void Send2UDPStr(String DataStr)
+void Send2UDPStr(const uint8_t *buf, size_t len)
 {
-  if (WiFi.isConnected())
-  {
-    IPAddress address = WiFi.localIP();
-    address[3] = 0xFF;
-    udp.beginPacket(address, localPort);
-    udp.write(DataStr.c_str(), DataStr.length());
-    udp.endPacket();
-  }
+  IPAddress address(0xff,0xff,0xff,0xff);
+  udp.beginPacket(address, localPort);
+  udp.write(buf, len);
+  udp.endPacket();
 }
 

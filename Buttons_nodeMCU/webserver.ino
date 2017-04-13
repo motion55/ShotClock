@@ -89,8 +89,6 @@ void wlanPageHandler()
     
     if ((!bWiFiConnect)||bChange)
     {
-      //if (bServerConnect) serverConnect(false);
-      
       if (sta_passwd.length()>0)
       {
         WiFi.begin(sta_ssid.c_str(), sta_passwd.c_str());
@@ -175,18 +173,20 @@ void gpioPageHandler()
   // Check if there are any GET parameters
   if (webserver.hasArg("gpio2"))
   {
+    String dataStr;
     if (webserver.arg("gpio2") == "1")
     {
       Stop = false;
       LED_ON;
-      Send2ClientStr(String("ZZZ"));;
+      dataStr = "ZZZ";
     }
     else
     {
       Stop = true;
       LED_OFF;
-      Send2ClientStr(String("XXX"));
+      dataStr = "XXX";
     }
+    Send2ClientStr((const uint8_t *)dataStr.c_str(), dataStr.length());
   }
 
   if (webserver.hasArg("icount"))

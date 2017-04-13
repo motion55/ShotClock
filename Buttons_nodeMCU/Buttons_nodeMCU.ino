@@ -49,8 +49,8 @@ void setUpWifiShield() {
 
 void SendTrytoSEND(String CommandData) 
 {
-  Send2UDPStr(CommandData);
-  Send2ClientStr(CommandData);
+  Send2UDPStr((const uint8_t*)CommandData.c_str(), CommandData.length());
+  Send2ClientStr((const uint8_t*)CommandData.c_str(), CommandData.length());
   for (int i=0; i<CommandData.length(); i++)
   {
     uint8_t b = CommandData[i];
