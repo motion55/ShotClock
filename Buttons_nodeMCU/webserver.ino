@@ -87,7 +87,7 @@ void wlanPageHandler()
       }
     }
     
-    if ((!bWiFiConnect)||bChange)
+    if ((!bWiFiConnect&&!WiFi.isConnected())||bChange)
     {
       if (sta_passwd.length()>0)
       {
@@ -213,13 +213,13 @@ void gpioPageHandler()
 
   if (Stop)
   {
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On<br>";
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off<br><br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">Run<br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Stop<br><br>";
   }
   else
   {
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>On<br>";
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off<br><br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>Run<br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Stop<br><br>";
   }
 
   //response_message += "Initial Count(secs.)<br>";

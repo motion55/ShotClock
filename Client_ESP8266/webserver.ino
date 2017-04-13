@@ -85,7 +85,7 @@ void wlanPageHandler()
       }
     }
     
-    if ((!bWiFiConnect)||bChange)
+    if ((!bWiFiConnect&&!WiFi.isConnected())||bChange)
     {
       if (bServerConnect) serverConnect(false);
       

@@ -87,7 +87,7 @@ void wlanPageHandler()
       }
     }
     
-    if ((!bWiFiConnect)||bChange)
+    if ((!bWiFiConnect&&!WiFi.isConnected())||bChange)
     {
       if (sta_passwd.length()>0)
       {
