@@ -37,7 +37,7 @@ inline void webserver_loop()
 void rootPageHandler()
 {
   String response_message = "<html><head><title>ShotClock Display Client</title></head>";
-  response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>ShotClock Display</center></h1>";
+  response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>"+ap_ssid+" Display</center></h1>";
   response_message += "<h2><center>Controller Client</center></h3>";
 
   if (WiFi.isConnected())

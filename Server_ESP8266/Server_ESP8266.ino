@@ -74,8 +74,9 @@ void setup(void) {
 
 void loop(void) {
   webserver_loop();
+  delay(5);
   wifiServer_loop();
-	delay(10);
+  delay(5);
 }
 
 void wifiServer_loop(void)
@@ -190,9 +191,28 @@ void Send2ClientStr(const uint8_t *buf, size_t len)
 
 void Send2UDPStr(const uint8_t *buf, size_t len)
 {
-  IPAddress address(0xff,0xff,0xff,0xff);
-  udp.beginPacket(address, localPort);
-  udp.write(buf, len);
-  udp.endPacket();
+  if (WiFi.isConnected())
+  {
+    IPAddress address = WiFi.localIP();
+    address[3] = 0xFF;
+    udp.beginPacket(address, localPort);
+    udp.write(buf, len);
+    udp.endPacket();
+    delay(1);
+    #ifdef DebugSerial
+    DebugSerial.write('+');
+    #endif
+  }
+
+  {
+    IPAddress address(0xff,0xff,0xff,0xff);
+    udp.beginPacket(address, localPort);
+    udp.write(buf, len);
+    udp.endPacket();
+    delay(1);
+    #ifdef DebugSerial
+    DebugSerial.write('-');
+    #endif
+  }
 }
 

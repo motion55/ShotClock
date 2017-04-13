@@ -15,7 +15,7 @@
 #include <WiFiUdp.h>
 
 // Access point credentials
-const char *ap_ssid = "ShotClock";
+String ap_ssid("ShotClock");
 const char *ap_password = "12345678";
 
 String sta_ssid("Controller");
@@ -45,7 +45,10 @@ void setup(void) {
   IPAddress subnet(255,255,255,0);
 
   WiFi.softAPConfig(local_IP, gateway, subnet);
-  WiFi.softAP(ap_ssid,ap_password); 
+
+  String macAddr = WiFi.softAPmacAddress();
+  ap_ssid += '_' + macAddr.substring(12,14) + macAddr.substring(15);
+  WiFi.softAP(ap_ssid.c_str(),ap_password); 
   
   if (WiFi.SSID().length()>0)
   {
@@ -54,7 +57,8 @@ void setup(void) {
   }
 #ifdef DebugSerial
   DebugSerial.println();
-  DebugSerial.println("ShotClock initializing...");
+  DebugSerial.print(ap_ssid);
+  DebugSerial.println(" initializing...");
   DebugSerial.print("Connecting to SSID:");
   DebugSerial.print(WiFi.SSID());
   DebugSerial.print("-Password:");
