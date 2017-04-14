@@ -68,7 +68,7 @@ void UpdateTime(void)
     int32_t interval = current - prev_time;
     if (interval>=100L)
     {
-      prev_time = current + interval - 100;  
+      prev_time = current + 100L - interval;  
       if (Count_Val>1)
       {
         Count_Val--;

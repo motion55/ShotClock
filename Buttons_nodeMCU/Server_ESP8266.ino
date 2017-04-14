@@ -220,8 +220,10 @@ void Send2UDPStr(const uint8_t *buf, size_t len)
     #endif
   }
 
+  if (WiFi.softAPgetStationNum()>0)
   {
-    IPAddress address(0xff,0xff,0xff,0xff);
+    IPAddress address = WiFi.softAPIP();
+    address[3] = 0xFF;
     udp.beginPacket(address, localPort);
     udp.write(buf, len);
     udp.endPacket();

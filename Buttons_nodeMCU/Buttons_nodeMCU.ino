@@ -61,7 +61,7 @@ void UpdateTime(void)
     int32_t interval = current - prev_time;
     if (interval>=100L)
     {
-      prev_time = current + interval - 100;  
+      prev_time = current + 100L - interval;  
       if (Count_Val>1)
       {
         Count_Val--;
@@ -93,7 +93,8 @@ void StopCount(bool bStop)
 
 //-----------------------------------------------------------------wifi CODES start
 
-void setUpWifiShield() {
+void setUpWifiShield() 
+{
   Server_setup();
 }
 
@@ -115,7 +116,7 @@ void ShotClockTriggeringCodes()
   //--------------------------------debounce start-------Start  Stop  button--------
   unsigned long CurrentTime = millis();                      
   
-  if ((CurrentTime - lastDebounceTime) > debounceDelay) 
+  //if ((CurrentTime - lastDebounceTime) > debounceDelay) 
   { 
     if (readingStartStop != buttonState) 
     {
@@ -133,25 +134,29 @@ void ShotClockTriggeringCodes()
           SendTrytoSEND("XX");
         }
       }
+      delay(50);
       lastDebounceTime = CurrentTime;
     }
   }
 
   //-------------------------------------------------------reset14 and reset24 START------------------
-  if (readingReset14 == LOW) {
-    Stop = true;
-    LED_OFF;
+  if (readingReset14 == LOW) 
+  {
+    Count_Val = 140;
+    Count_Init = 140;
+    StopCount(true);
     SendTrytoSEND("Q14");             //to reset 14
     delay(100);
   }
-  if (readingReset24 == LOW) {
-    Stop = true;
-    LED_OFF;
+  if (readingReset24 == LOW) 
+  {
+    Count_Val = 240;
+    Count_Init = 240;
+    StopCount(true);
     SendTrytoSEND("Q24");               //to reset 24
     delay(100);
   }
   //-------------------------------------------------------reset14 and reset24 END------------------
-
 }
 
 
