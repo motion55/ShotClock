@@ -14,11 +14,11 @@ const int ResetENA = 8;
 const int StartStopENA = 9;
 const int StartStopLED = 10;
 
-int Na_set_na_Time = 24;
-bool StartStopCondi = false;
-bool Start = true;                                              
-//bool Reset = false;
-//bool Stop = true;
+int Count_Val;
+int Count_Init;
+uint32_t prev_time;
+
+bool Stop = true;
 
 int buttonState = LOW;
 unsigned long lastDebounceTime = 0;                             
@@ -30,6 +30,8 @@ unsigned long debounceDelay = 50;
 SoftwareSerial ESPSerial(2,3);
 
 #define ESP8266 Serial
+#define LED_ON  digitalWrite(LED_BUILTIN, HIGH)
+#define LED_OFF digitalWrite(LED_BUILTIN, LOW)
 
 //--------------------------------------------------
 
@@ -43,11 +45,57 @@ void setup() {
   pinMode(StartStop, INPUT);
   pinMode(Reset14, INPUT_PULLUP);   
   pinMode(Reset24, INPUT_PULLUP); 
+  pinMode(LED_BUILTIN, OUTPUT);
+  LED_ON;
   
+  Stop = true;
+  Count_Val = 240;
+  Count_Init = 240;
 }
 
 void loop() {
   ShotClockTriggeringCodes(); 
+  UpdateTime();
+}
+
+/*///////////////////////////////////////////////////////////////////////////*/
+
+void UpdateTime(void)
+{
+  if (!Stop)
+  {
+    uint32_t current = millis();
+    int32_t interval = current - prev_time;
+    if (interval>=100L)
+    {
+      prev_time = current + interval - 100;  
+      if (Count_Val>1)
+      {
+        Count_Val--;
+      }
+      else
+      {
+        Count_Val = Count_Init;
+        StopCount(true);
+      }
+    }
+  }
+}
+
+void StopCount(bool bStop)
+{
+  if (!bStop)
+  {
+    Stop = false;
+    if (Count_Val<=0) Count_Val = Count_Init;
+    prev_time = millis();
+    LED_OFF;
+  }
+  else
+  {
+    Stop = true;
+    LED_ON;
+  }
 }
 
 //-----------------------------------------------------------------wifi CODES start
@@ -89,43 +137,32 @@ void ShotClockTriggeringCodes() {
       buttonState = readingStartStop;
       if (buttonState == HIGH) 
       {
-        StartStopCondi = !StartStopCondi;
+        if (Stop) 
+        {
+          StopCount(false);
+          SendTrytoSEND("ZZ");
+        }
+        else
+        {
+          StopCount(true);
+          SendTrytoSEND("XX");
+        }
       }
       lastDebounceTime = CurrentTime;
-    }
-  }
-
-  if (StartStopCondi) 
-  {
-    // Start condition
-    if (Start) 
-    {
-      SendTrytoSEND("ZZ");
-      Start = !Start;                                                        
-      digitalWrite(StartStopLED, LOW);
-      digitalWrite(LED_BUILTIN, HIGH);  
-    }
-  } 
-  else 
-  {
-    //Stop condition
-    if (!Start) 
-    {
-      SendTrytoSEND("XX");
-      Start = !Start;
-      digitalWrite(StartStopLED, HIGH);
-      digitalWrite(LED_BUILTIN, LOW);  
     }
   }
   
   //---------------------------------debounce end-------Start  Stop  Button-------
 
   //-------------------------------------------------------reset14 and reset24 START------------------
-  if (readingReset14 == LOW) {
+  if (readingReset14 == LOW) 
+  {
+    StopCount(true);
     SendTrytoSEND("Q14");             //to reset 14
     delay(100);
   }
   if (readingReset24 == LOW) {
+    StopCount(true);
     SendTrytoSEND("Q24");               //to reset 24
     delay(100);
   }

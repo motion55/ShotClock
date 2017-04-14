@@ -81,9 +81,6 @@ void loop(void) {
 }
 
 WiFiClient wifiClient;
-#define _echo_commands_ 0
-
-#define RCV_PACKET_SIZE  32
 
 void wifiClient_loop(void)
 {
@@ -93,11 +90,10 @@ void wifiClient_loop(void)
   
   if (bWiFiConnected)
   {
-    int cb = udp.parsePacket();
+    size_t cb = udp.parsePacket();
     if (cb>0)
     {
-      byte packetBuffer[RCV_PACKET_SIZE];
-      if (cb>RCV_PACKET_SIZE) cb = RCV_PACKET_SIZE;
+      byte packetBuffer[cb];
       udp.read(packetBuffer, cb);
       Serial.write(packetBuffer, cb);
     }
@@ -107,16 +103,20 @@ void wifiClient_loop(void)
   {
     last_connect = curr_connect;
     
-    while (Serial.available()>0) {
-      uint8_t b = Serial.read();
-      wifiClient.write(b);
+    size_t len = Serial.available();
+    if (len>0) 
+    {
+      uint8_t buf[len];
+      Serial.readBytes(buf, len);
+      wifiClient.write(buf, len);
     }
-    while (wifiClient.available()>0) {
-      uint8_t b = wifiClient.read();
-      Serial.write(b);
-    #if (_echo_commands_)
-      wifiClient.write(b);
-    #endif
+
+    len = wifiClient.available();
+    if (len>0) 
+    {
+      uint8_t buf[len];
+      wifiClient.read(buf, len);
+      Serial.write(buf, len);
     }
   }
   else

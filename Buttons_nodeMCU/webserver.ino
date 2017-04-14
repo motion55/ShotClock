@@ -21,9 +21,6 @@ void webserver_setup()
 
   webserver.begin();
 
-  wifiServer.begin();
-  wifiServer.setNoDelay(true);
-
   bWiFiConnect = true;
   last_connect = millis();
   Reconnect = 0;
@@ -107,16 +104,15 @@ void wlanPageHandler()
     }
   }
 
-  String response_message = "";
-  response_message += "<html>";
+  String response_message = "<html>";
   if (bWiFiConnect)
   {
-    response_message += "<head><title>ShotClock Display Client</title>";
+    response_message += "<head><title>Buttons Controller Server</title>";
     response_message += "<meta http-equiv=\"refresh\" content=\"10; url=/wlan_config\"></head>";
   }
   else
   {
-    response_message += "<head><title>ShotClock Display Client</title></head>";
+    response_message += "<head><title>Buttons Controller Server</title></head>";
   }
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
 
@@ -202,7 +198,9 @@ void gpioPageHandler()
       dataStr = "XXX";
     }
     Send2UDPStr((const uint8_t *)dataStr.c_str(), dataStr.length());
+#if _USE_TCP_  
     Send2ClientStr((const uint8_t *)dataStr.c_str(), dataStr.length());
+#endif    
   }
 
   if (webserver.hasArg("icount"))

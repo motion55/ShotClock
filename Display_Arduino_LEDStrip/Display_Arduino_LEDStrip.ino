@@ -13,7 +13,8 @@
 SoftwareSerial ESPSerial(2,3);
 
 //#define DebugSerial Serial
-
+#define LED_ON  digitalWrite(LED_BUILTIN, HIGH)
+#define LED_OFF digitalWrite(LED_BUILTIN, LOW)
 
 int Count_Val;
 int Count_Init;
@@ -26,6 +27,9 @@ void setup(void) {
 	Serial.begin(19200);
   ESPSerial.begin(19200);
   pinMode(2,INPUT_PULLUP);
+  
+  pinMode(LED_BUILTIN, OUTPUT);
+  LED_ON;
   
   Stop = true;
   Count_Val = 240;
@@ -100,26 +104,23 @@ void ProcessCommand(char cmd)
     if ((cmd>='0')&&(cmd<='9'))
     {
       Count_str += cmd;
-      if (Count_str.length()>=2)
-      {
-        Count_Init = Count_str.toInt()*10;
-        Count_Val = Count_Init;
-        Reset = false;
-      }
-      return;
+      if (Count_str.length()<2) return;
+      
+      Count_Init = Count_str.toInt()*10;
+      Count_Val = Count_Init;
     }
     else
     if (Count_str.length()>0)
     {
       Count_Init = Count_str.toInt()*10;
       Count_Val = Count_Init;
-      Reset = false;
     }
     else
     {
       Count_Val = Count_Init;
-      Reset = false;
     }
+    Reset = false;
+    StopCount(true);
   }
   
   switch (cmd) {
@@ -171,10 +172,12 @@ void StopCount(bool bStop)
     Stop = false;
     if (Count_Val<=0) Count_Val = Count_Init;
     prev_time = millis();
+    LED_OFF;
   }
   else
   {
-    Stop = true;    
+    Stop = true;
+    LED_ON;
   }
 }
 

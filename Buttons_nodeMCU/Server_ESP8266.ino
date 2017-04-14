@@ -60,6 +60,16 @@ void Server_setup(void) {
   DebugSerial.println(WiFi.psk());
 #endif  
   webserver_setup();
+
+  wifiServer.begin();
+  wifiServer.setNoDelay(true);
+
+  udp.begin(localPort);
+#ifdef DebugSerial
+  DebugSerial.print("Starting UDP ");
+  DebugSerial.print("Local port: ");
+  DebugSerial.println(udp.localPort());
+#endif  
 }
 
 void Server_loop(void) {
@@ -95,17 +105,31 @@ void wifiServer_loop(void)
     }
   }
   //check clients for data
+  {
+    size_t cb = udp.parsePacket();
+    if (cb>0)
+    {
+      uint8_t packetBuffer[cb];
+      udp.read(packetBuffer, cb);
+      Serial.write(packetBuffer, cb);
+    }
+  }
+#if 0    
   for(i = 0; i < MAX_SRV_CLIENTS; i++)
   {
     if (wifiClients[i] && wifiClients[i].connected())
     {
-      if(wifiClients[i].available())
+      size_t len = wifiClients[i].available();
+      if(len>0)
       {
+        uint8_t buf[len];
         //get data from the telnet client and push it to the UART
-        while(wifiClients[i].available()) ESPSerial.write(wifiClients[i].read());
+        wifiClients[i].read(buf, len);
+        ESPSerial.write(buf, len);
       }
     }
   }
+#endif  
   //check UART for data
   size_t len = ESPSerial.available();
   if(len>0)
@@ -114,7 +138,9 @@ void wifiServer_loop(void)
     ESPSerial.readBytes(sbuf,len);
     //push UART data to all connected telnet clients
     Send2UDPStr(sbuf, len);
+#if _USE_TCP_  
     Send2ClientStr(sbuf, len);
+#endif    
   }
 
   if (bWiFiConnect)

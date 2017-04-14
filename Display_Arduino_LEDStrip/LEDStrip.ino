@@ -8,7 +8,7 @@
 #define BRIGHTNESS  250
 #define FRAMES_PER_SECOND 5
 
-uint8_t pps = 4;            // number of Pixels Per Segment
+const uint8_t pps = 2;      // number of Pixels Per Segment
 CHSV segON10(96, 255, 255); // color of 10s digit segments NOT TURNED RED
 CHSV segON(96, 255, 255);   // color of 1s digit segments
 
