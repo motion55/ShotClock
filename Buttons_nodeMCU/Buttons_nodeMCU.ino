@@ -19,6 +19,7 @@ int buttonState = LOW;
 unsigned long lastDebounceTime = 0;                             
 unsigned long debounceDelay = 50;                               
 
+#define _USE_UDP_  0
 #define _USE_TCP_  1
 
 //--------------------------------------------------
@@ -100,7 +101,9 @@ void setUpWifiShield()
 
 void SendTrytoSEND(String CommandData) 
 {
+#if _USE_UDP_  
   Send2UDPStr((const uint8_t*)CommandData.c_str(), CommandData.length());
+#endif  
 #if _USE_TCP_  
   Send2ClientStr((const uint8_t*)CommandData.c_str(), CommandData.length());
 #endif  
@@ -126,12 +129,12 @@ void ShotClockTriggeringCodes()
         if (Stop) 
         {
           StopCount(false);
-          SendTrytoSEND("ZZ");
+          SendTrytoSEND("ZZZZZZZZZZZZZZZZ\r\n");
         }
         else
         {
           StopCount(true);
-          SendTrytoSEND("XX");
+          SendTrytoSEND("XXXXXXXXXXXXXXXX\r\n");
         }
       }
       delay(50);

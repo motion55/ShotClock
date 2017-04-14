@@ -36,7 +36,15 @@ unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bWiFiConnect;
 
 // A UDP instance to let us send and receive packets over UDP
+ #define  _UDP_LISTEN_  0
+#if _UDP_LISTEN_
 WiFiUDP udp;
+#define udp1 udp
+#define udp2 udp
+#else
+WiFiUDP udp1;
+WiFiUDP udp2;
+#endif
 
 void Server_setup(void) {
   IPAddress local_IP(192,168,6,1);
@@ -60,16 +68,16 @@ void Server_setup(void) {
   DebugSerial.println(WiFi.psk());
 #endif  
   webserver_setup();
-
   wifiServer.begin();
   wifiServer.setNoDelay(true);
-
+#if _UDP_LISTEN_
   udp.begin(localPort);
-#ifdef DebugSerial
+  #ifdef DebugSerial
   DebugSerial.print("Starting UDP ");
   DebugSerial.print("Local port: ");
   DebugSerial.println(udp.localPort());
-#endif  
+  #endif  
+#endif
 }
 
 void Server_loop(void) {
@@ -105,6 +113,7 @@ void wifiServer_loop(void)
     }
   }
   //check clients for data
+#if _UDP_LISTEN_
   {
     size_t cb = udp.parsePacket();
     if (cb>0)
@@ -114,6 +123,7 @@ void wifiServer_loop(void)
       Serial.write(packetBuffer, cb);
     }
   }
+#endif  
 #if 0    
   for(i = 0; i < MAX_SRV_CLIENTS; i++)
   {
@@ -211,9 +221,9 @@ void Send2UDPStr(const uint8_t *buf, size_t len)
   {
     IPAddress address = WiFi.localIP();
     address[3] = 0xFF;
-    udp.beginPacket(address, localPort);
-    udp.write(buf, len);
-    udp.endPacket();
+    udp1.beginPacket(address, localPort);
+    udp1.write(buf, len);
+    udp1.endPacket();
     delay(1);
     #ifdef DebugSerial
     DebugSerial.write('+');
@@ -224,9 +234,9 @@ void Send2UDPStr(const uint8_t *buf, size_t len)
   {
     IPAddress address = WiFi.softAPIP();
     address[3] = 0xFF;
-    udp.beginPacket(address, localPort);
-    udp.write(buf, len);
-    udp.endPacket();
+    udp2.beginPacket(address, localPort);
+    udp2.write(buf, len);
+    udp2.endPacket();
     delay(1);
     #ifdef DebugSerial
     DebugSerial.write('-');
