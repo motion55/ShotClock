@@ -101,13 +101,13 @@ void setUpWifiShield()
 
 void SendTrytoSEND(String CommandData) 
 {
+  ESPSerial.write((const uint8_t*)CommandData.c_str(), CommandData.length());
 #if _USE_UDP_  
   Send2UDPStr((const uint8_t*)CommandData.c_str(), CommandData.length());
 #endif  
 #if _USE_TCP_  
   Send2ClientStr((const uint8_t*)CommandData.c_str(), CommandData.length());
 #endif  
-  ESPSerial.write((const uint8_t*)CommandData.c_str(), CommandData.length());
 }
 
 void ShotClockTriggeringCodes() 
@@ -119,7 +119,7 @@ void ShotClockTriggeringCodes()
   //--------------------------------debounce start-------Start  Stop  button--------
   unsigned long CurrentTime = millis();                      
   
-  //if ((CurrentTime - lastDebounceTime) > debounceDelay) 
+  if ((CurrentTime - lastDebounceTime) > debounceDelay) 
   { 
     if (readingStartStop != buttonState) 
     {
@@ -136,8 +136,8 @@ void ShotClockTriggeringCodes()
           StopCount(true);
           SendTrytoSEND("XXXXXXXXXXXXXXXX\r\n");
         }
+        delay(50);
       }
-      delay(50);
       lastDebounceTime = CurrentTime;
     }
   }

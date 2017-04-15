@@ -24,7 +24,7 @@ String sta_passwd;
 unsigned int localPort = 1234;
 WiFiServer wifiServer(localPort);
 
-#define MAX_SRV_CLIENTS 2
+#define MAX_SRV_CLIENTS 3
 WiFiClient wifiClients[MAX_SRV_CLIENTS];
 
 #define WIFI_CONNECT_INTERVAL   5000L
@@ -36,7 +36,8 @@ unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bWiFiConnect;
 
 // A UDP instance to let us send and receive packets over UDP
- #define  _UDP_LISTEN_  0
+#define  _UDP_LISTEN_  0
+
 #if _UDP_LISTEN_
 WiFiUDP udp;
 #define udp1 udp
@@ -82,36 +83,47 @@ void Server_setup(void) {
 }
 
 void Server_loop(void) {
-  webserver_loop();
-  delay(5);
+  //webserver_loop();
+  //delay(5);
   wifiServer_loop();
   delay(5);
 }
 
 void wifiServer_loop(void)
 {
-  uint8_t i;
+  uint8_t idx;
   //check if there are any new clients
   if (wifiServer.hasClient())
   {
-    bool result = false;
-    for(i = 0; i < MAX_SRV_CLIENTS; i++)
+    for(idx = 0; idx < MAX_SRV_CLIENTS; idx++)
     {
       //find free/disconnected spot
-      if (!wifiClients[i] || !wifiClients[i].connected())
+      if (!wifiClients[idx] || !wifiClients[idx].connected())
       {
-        if(wifiClients[i]) wifiClients[i].stop();
-        wifiClients[i] = wifiServer.available();
-        result = true;
-        break;
+        if(wifiClients[idx]) wifiClients[idx].stop();
+        wifiClients[idx] = wifiServer.available();
+        #ifdef DebugSerial
+        if (wifiClients[idx])
+        {
+          DebugSerial.print(idx);
+          DebugSerial.print(".Client accepted:");
+          DebugSerial.println(wifiClients[idx].remoteIP().toString());
+        }
+        #endif  
+        continue;
       }
     }
     //no free/disconnected spot so reject
-    if (!result)
+    WiFiClient serverClient = wifiServer.available();
+    #ifdef DebugSerial
+    if (serverClient)
     {
-      WiFiClient serverClient = wifiServer.available();
-      serverClient.stop();
+      DebugSerial.print("Client rejected:");
+      DebugSerial.println(serverClient.remoteIP().toString());
     }
+    DebugSerial.println("!!!");
+    #endif  
+    serverClient.stop();
   }
   //check clients for data
 #if _UDP_LISTEN_
@@ -125,8 +137,8 @@ void wifiServer_loop(void)
     }
   }
 #endif  
-#if 0    
-  for(i = 0; i < MAX_SRV_CLIENTS; i++)
+#if 1    
+  for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++)
   {
     if (wifiClients[i] && wifiClients[i].connected())
     {
@@ -140,7 +152,6 @@ void wifiServer_loop(void)
       }
     }
   }
-#endif  
   //check UART for data
   size_t len = ESPSerial.available();
   if(len>0)
@@ -148,12 +159,14 @@ void wifiServer_loop(void)
     uint8_t sbuf[len];
     ESPSerial.readBytes(sbuf,len);
     //push UART data to all connected telnet clients
+  #if _USE_UDP_
     Send2UDPStr(sbuf, len);
-#if _USE_TCP_  
+  #endif
+  #if _USE_TCP_  
     Send2ClientStr(sbuf, len);
-#endif    
+  #endif    
   }
-
+#endif  
   if (bWiFiConnect)
   {
     unsigned long curr_connect = millis();

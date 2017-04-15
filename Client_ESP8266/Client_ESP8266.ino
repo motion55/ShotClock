@@ -34,6 +34,8 @@ unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bServerConnect;
 bool bWiFiConnect;
 
+WiFiClient wifiClient;
+
 // A UDP instance to let us send and receive packets over UDP
 WiFiUDP udp;
 
@@ -73,6 +75,7 @@ void setup(void) {
   DebugSerial.println(udp.localPort());
 #endif  
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  wifiClient.setNoDelay(true);
 }
 
 void loop(void) {
@@ -80,8 +83,6 @@ void loop(void) {
   wifiClient_loop();
   delay(10);
 }
-
-WiFiClient wifiClient;
 
 void wifiClient_loop(void)
 {
@@ -103,6 +104,7 @@ void wifiClient_loop(void)
   if (bWiFiConnected&&bClientConnected)
   {
     last_connect = curr_connect;
+    Reconnect = 0;
     
     size_t len = Serial.available();
     if (len>0) 

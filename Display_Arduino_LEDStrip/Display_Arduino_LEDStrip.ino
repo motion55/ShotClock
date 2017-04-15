@@ -22,6 +22,7 @@ uint32_t prev_time;
 
 bool Reset = false;
 bool Stop = true;
+bool bEcho = false;
 
 void setup(void) {
 	Serial.begin(19200);
@@ -86,7 +87,7 @@ void serialServer_loop(void)
 {
   while (Serial.available()>0) {
     unsigned char b = Serial.read();
-    Serial.write(b);  //echo
+    if (bEcho) Serial.write(b);  //echo
     ProcessCommand(b);
   }
   while (ESPSerial.available()>0) {
@@ -147,6 +148,14 @@ void ProcessCommand(char cmd)
       Reset = false;
       Count_Val = Count_Init;
       StopCount(true);
+      break;
+    case 'E':
+    case 'e':
+      bEcho = true;
+      break;
+    case 'F':
+    case 'f':
+      bEcho = false;
       break;
   }
 }

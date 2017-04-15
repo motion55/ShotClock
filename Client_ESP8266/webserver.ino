@@ -208,8 +208,7 @@ void serverPageHandler()
     }
   }
 
-  String response_message = "<html><head><title>ShotClock Display Client</title>";
-  response_message += "<meta http-equiv=\"refresh\" content=\"5\"></head>";
+  String response_message = "<html><head><title>ShotClock Display Client</title></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Configure Server</center></h1>";
 
   response_message += "<center><a href=\"/\">Return to main page</a></center><br>";

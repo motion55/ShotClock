@@ -197,7 +197,9 @@ void gpioPageHandler()
       LED_OFF;
       dataStr = "XXX";
     }
+#if _USE_UDP_
     Send2UDPStr((const uint8_t *)dataStr.c_str(), dataStr.length());
+#endif    
 #if _USE_TCP_  
     Send2ClientStr((const uint8_t *)dataStr.c_str(), dataStr.length());
 #endif    
@@ -215,9 +217,12 @@ void gpioPageHandler()
   }
   
   /*//////////////////////////////////////////////////////////////*/ 
-
+#if 0
   String response_message = "<html><head><title>Buttons Controller Server</title>";
   response_message += "<meta http-equiv=\"refresh\" content=\"5\"></head>";
+#else
+  String response_message = "<html><head><title>Buttons Controller Server</title></head>";
+#endif  
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Control GPIO pins</center></h1>";
   response_message += "<form method=\"get\">";
 
