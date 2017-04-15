@@ -237,6 +237,10 @@ void gpioPageHandler()
     {
       response_message += "  "+String(index+1)+". IP Address: "+wifiClients[index].remoteIP().toString()+"<br>";
     }
+    else
+    {
+      response_message += "  "+String(index+1)+". **Available slot for client**<br>";
+    }
   }
   
   response_message += "<br>Shot Clock:<br>";

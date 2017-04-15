@@ -129,12 +129,12 @@ void ShotClockTriggeringCodes()
         if (Stop) 
         {
           StopCount(false);
-          SendTrytoSEND("ZZZZZZZZZZZZZZZZ\r\n");
+          SendTrytoSEND("ZZZ\r\n");
         }
         else
         {
           StopCount(true);
-          SendTrytoSEND("XXXXXXXXXXXXXXXX\r\n");
+          SendTrytoSEND("XXX\r\n");
         }
         delay(50);
       }
@@ -148,7 +148,7 @@ void ShotClockTriggeringCodes()
     Count_Val = 140;
     Count_Init = 140;
     StopCount(true);
-    SendTrytoSEND("Q14");             //to reset 14
+    SendTrytoSEND("Q14\r\n");             //to reset 14
     delay(100);
   }
   if (readingReset24 == LOW) 
@@ -156,7 +156,7 @@ void ShotClockTriggeringCodes()
     Count_Val = 240;
     Count_Init = 240;
     StopCount(true);
-    SendTrytoSEND("Q24");               //to reset 24
+    SendTrytoSEND("Q24\r\n");               //to reset 24
     delay(100);
   }
   //-------------------------------------------------------reset14 and reset24 END------------------

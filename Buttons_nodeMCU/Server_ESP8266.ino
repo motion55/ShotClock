@@ -83,8 +83,8 @@ void Server_setup(void) {
 }
 
 void Server_loop(void) {
-  //webserver_loop();
-  //delay(5);
+  webserver_loop();
+  delay(5);
   wifiServer_loop();
   delay(5);
 }
