@@ -216,13 +216,25 @@ void gpioPageHandler()
   
   /*//////////////////////////////////////////////////////////////*/ 
 
-  String response_message = "<html><head><title>Buttons Controller Server</title></head>";
+  String response_message = "<html><head><title>Buttons Controller Server</title>";
+  response_message += "<meta http-equiv=\"refresh\" content=\"5\"></head>";
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Control GPIO pins</center></h1>";
   response_message += "<form method=\"get\">";
 
   response_message += "<a href=\"/\">Return to main page</a><br><br>";
 
-  response_message += "Shot Clock:<br>";
+  response_message += "SoftAP Stations: "+String(WiFi.softAPgetStationNum())+"<br><br>";
+
+  response_message += "Connected clients:<br>";
+  for (uint8_t index = 0; index < MAX_SRV_CLIENTS; index++)
+  {
+    if (wifiClients[index] && wifiClients[index].connected())
+    {
+      response_message += "  "+String(index+1)+". IP Address: "+wifiClients[index].remoteIP().toString()+"<br>";
+    }
+  }
+  
+  response_message += "<br>Shot Clock:<br>";
 
   if (Stop)
   {

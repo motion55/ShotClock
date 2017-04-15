@@ -72,6 +72,7 @@ void setup(void) {
   DebugSerial.print("Local port: ");
   DebugSerial.println(udp.localPort());
 #endif  
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
 }
 
 void loop(void) {
