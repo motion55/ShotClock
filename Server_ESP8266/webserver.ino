@@ -21,9 +21,6 @@ void webserver_setup()
 
   webserver.begin();
 
-  wifiServer.begin();
-  wifiServer.setNoDelay(true);
-
   bWiFiConnect = true;
   last_connect = millis();
   Reconnect = 0;
@@ -107,16 +104,15 @@ void wlanPageHandler()
     }
   }
 
-  String response_message = "";
-  response_message += "<html>";
+  String response_message = "<html>";
   if (bWiFiConnect)
   {
-    response_message += "<head><title>ShotClock Display Client</title>";
+    response_message += "<head><title>Buttons Controller Server</title>";
     response_message += "<meta http-equiv=\"refresh\" content=\"10; url=/wlan_config\"></head>";
   }
   else
   {
-    response_message += "<head><title>ShotClock Display Client</title></head>";
+    response_message += "<head><title>Buttons Controller Server</title></head>";
   }
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>WLAN Settings</center></h1>";
 
@@ -128,7 +124,14 @@ void wlanPageHandler()
   }
   else
   {
-    response_message += "WLAN Status: Disconnected<br>";
+    if (bWiFiConnect)
+    {
+      response_message += "WLAN Status: Connecting<br>";
+    }
+    else
+    {
+      response_message += "WLAN Status: Disconnected<br>";
+    }
   }
   response_message += "Local Address: "+WiFi.localIP().toString()+"<br>";
   response_message += "  Subnet Mask: "+WiFi.subnetMask().toString()+"<br>";
@@ -194,7 +197,12 @@ void gpioPageHandler()
       LED_OFF;
       dataStr = "XXX";
     }
+#if _USE_UDP_
+    Send2UDPStr((const uint8_t *)dataStr.c_str(), dataStr.length());
+#endif    
+#if _USE_TCP_  
     Send2ClientStr((const uint8_t *)dataStr.c_str(), dataStr.length());
+#endif    
   }
 
   if (webserver.hasArg("icount"))
@@ -209,24 +217,43 @@ void gpioPageHandler()
   }
   
   /*//////////////////////////////////////////////////////////////*/ 
-
+#if 0
+  String response_message = "<html><head><title>Buttons Controller Server</title>";
+  response_message += "<meta http-equiv=\"refresh\" content=\"5\"></head>";
+#else
   String response_message = "<html><head><title>Buttons Controller Server</title></head>";
+#endif  
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Control GPIO pins</center></h1>";
   response_message += "<form method=\"get\">";
 
   response_message += "<a href=\"/\">Return to main page</a><br><br>";
 
-  response_message += "Shot Clock:<br>";
+  response_message += "SoftAP Stations: "+String(WiFi.softAPgetStationNum())+"<br><br>";
+
+  response_message += "Connected clients:<br>";
+  for (uint8_t index = 0; index < MAX_SRV_CLIENTS; index++)
+  {
+    if (wifiClients[index] && wifiClients[index].connected())
+    {
+      response_message += "  "+String(index+1)+". IP Address: "+wifiClients[index].remoteIP().toString()+"<br>";
+    }
+    else
+    {
+      response_message += "  "+String(index+1)+". **Available slot for client**<br>";
+    }
+  }
+  
+  response_message += "<br>Shot Clock:<br>";
 
   if (Stop)
   {
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">On<br>";
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Off<br><br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\">Run<br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\" checked>Stop<br><br>";
   }
   else
   {
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>On<br>";
-    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Off<br><br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"1\" onclick=\"submit();\" checked>Run<br>";
+    response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Stop<br><br>";
   }
 
   //response_message += "Initial Count(secs.)<br>";

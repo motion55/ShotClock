@@ -22,6 +22,9 @@ bool Stop;
 #ifndef _USE_TCP_ 
 #define _USE_TCP_ 1
 #endif
+#ifndef _USE_UDP_ 
+#define _USE_UDP_ 0
+#endif
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -37,7 +40,7 @@ String sta_passwd;
 unsigned int localPort = 1234;
 WiFiServer wifiServer(localPort);
 
-#define MAX_SRV_CLIENTS 2
+#define MAX_SRV_CLIENTS 3
 WiFiClient wifiClients[MAX_SRV_CLIENTS];
 
 #define WIFI_CONNECT_INTERVAL   5000L
@@ -49,7 +52,16 @@ unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bWiFiConnect;
 
 // A UDP instance to let us send and receive packets over UDP
+#define  _UDP_LISTEN_  0
+
+#if _UDP_LISTEN_
 WiFiUDP udp;
+#define udp1 udp
+#define udp2 udp
+#else
+WiFiUDP udp1;
+WiFiUDP udp2;
+#endif
 
 void setup(void) {
   IPAddress local_IP(192,168,6,1);
@@ -73,16 +85,17 @@ void setup(void) {
   DebugSerial.println(WiFi.psk());
 #endif  
   webserver_setup();
-
   wifiServer.begin();
   wifiServer.setNoDelay(true);
-
+#if _UDP_LISTEN_
   udp.begin(localPort);
-#ifdef DebugSerial
+  #ifdef DebugSerial
   DebugSerial.print("Starting UDP ");
   DebugSerial.print("Local port: ");
   DebugSerial.println(udp.localPort());
-#endif  
+  #endif  
+#endif
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
 }
 
 void loop(void) {
@@ -94,30 +107,42 @@ void loop(void) {
 
 void wifiServer_loop(void)
 {
-  uint8_t i;
+  uint8_t idx;
   //check if there are any new clients
   if (wifiServer.hasClient())
   {
-    bool result = false;
-    for(i = 0; i < MAX_SRV_CLIENTS; i++)
+    for(idx = 0; idx < MAX_SRV_CLIENTS; idx++)
     {
       //find free/disconnected spot
-      if (!wifiClients[i] || !wifiClients[i].connected())
+      if (!wifiClients[idx] || !wifiClients[idx].connected())
       {
-        if(wifiClients[i]) wifiClients[i].stop();
-        wifiClients[i] = wifiServer.available();
-        result = true;
-        break;
+        if(wifiClients[idx]) wifiClients[idx].stop();
+        wifiClients[idx] = wifiServer.available();
+        #ifdef DebugSerial
+        if (wifiClients[idx])
+        {
+          DebugSerial.print(idx);
+          DebugSerial.print(".Client accepted:");
+          DebugSerial.println(wifiClients[idx].remoteIP().toString());
+        }
+        #endif  
+        continue;
       }
     }
     //no free/disconnected spot so reject
-    if (!result)
+    WiFiClient serverClient = wifiServer.available();
+    #ifdef DebugSerial
+    if (serverClient)
     {
-      WiFiClient serverClient = wifiServer.available();
-      serverClient.stop();
+      DebugSerial.print("Client rejected:");
+      DebugSerial.println(serverClient.remoteIP().toString());
     }
+    DebugSerial.println("!!!");
+    #endif  
+    serverClient.stop();
   }
   //check clients for data
+#if _UDP_LISTEN_
   {
     size_t cb = udp.parsePacket();
     if (cb>0)
@@ -127,8 +152,9 @@ void wifiServer_loop(void)
       Serial.write(packetBuffer, cb);
     }
   }
-#if 0    
-  for(i = 0; i < MAX_SRV_CLIENTS; i++)
+#endif  
+#if 1    
+  for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++)
   {
     if (wifiClients[i] && wifiClients[i].connected())
     {
@@ -142,7 +168,6 @@ void wifiServer_loop(void)
       }
     }
   }
-#endif  
   //check UART for data
   size_t len = ESPSerial.available();
   if(len>0)
@@ -150,12 +175,14 @@ void wifiServer_loop(void)
     uint8_t sbuf[len];
     ESPSerial.readBytes(sbuf,len);
     //push UART data to all connected telnet clients
+  #if _USE_UDP_
     Send2UDPStr(sbuf, len);
-#if _USE_TCP_  
+  #endif
+  #if _USE_TCP_  
     Send2ClientStr(sbuf, len);
-#endif    
+  #endif    
   }
-
+#endif  
   if (bWiFiConnect)
   {
     unsigned long curr_connect = millis();
@@ -224,20 +251,22 @@ void Send2UDPStr(const uint8_t *buf, size_t len)
   {
     IPAddress address = WiFi.localIP();
     address[3] = 0xFF;
-    udp.beginPacket(address, localPort);
-    udp.write(buf, len);
-    udp.endPacket();
+    udp1.beginPacket(address, localPort);
+    udp1.write(buf, len);
+    udp1.endPacket();
     delay(1);
     #ifdef DebugSerial
     DebugSerial.write('+');
     #endif
   }
 
+  if (WiFi.softAPgetStationNum()>0)
   {
-    IPAddress address(0xff,0xff,0xff,0xff);
-    udp.beginPacket(address, localPort);
-    udp.write(buf, len);
-    udp.endPacket();
+    IPAddress address = WiFi.softAPIP();
+    address[3] = 0xFF;
+    udp2.beginPacket(address, localPort);
+    udp2.write(buf, len);
+    udp2.endPacket();
     delay(1);
     #ifdef DebugSerial
     DebugSerial.write('-');
