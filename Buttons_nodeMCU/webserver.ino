@@ -35,7 +35,9 @@ inline void webserver_loop()
 /* Root page for the webserver */
 void rootPageHandler()
 {
-  String response_message = "<html><head><title>Buttons Controller Server</title></head>";
+  String response_message = "<html><head><title>Buttons Controller Server</title>";
+  response_message += "<meta http-equiv=\"refresh\" content=\"3\"></head>";
+  
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Button Controller</center></h1>";
   response_message += "<h2><center>Controller Server</center></h3>";
 
@@ -49,7 +51,23 @@ void rootPageHandler()
   }
 
   response_message += "<h4><center><a href=\"/wlan_config\">Configure WLAN settings</a></center></h4>";
-  response_message += "<h4><center><a href=\"/gpio\">Display Logo On/Off</h4></li></center></h4>";
+  response_message += "<h4><center><a href=\"/gpio\">Display Logo On/Off</h4></li></a></center></h4>";
+  
+  response_message += "<center>SoftAP Stations: "+String(WiFi.softAPgetStationNum())+"</center><br>";
+  
+  response_message += "<center>Connected clients:</center>";
+  for (uint8_t index = 0; index < MAX_SRV_CLIENTS; index++)
+  {
+    if (wifiClients[index] && wifiClients[index].connected())
+    {
+      response_message += "<center>"+String(index+1)+". IP Address: "+wifiClients[index].remoteIP().toString()+" </center>";
+    }
+    else
+    {
+      response_message += "<center>"+String(index+1)+". **Available slot for client**</center>";
+    }
+  }
+  
   response_message += "</body></html>";
 
   webserver.send(200, "text/html", response_message);
@@ -217,31 +235,12 @@ void gpioPageHandler()
   }
   
   /*//////////////////////////////////////////////////////////////*/ 
-#if 0
-  String response_message = "<html><head><title>Buttons Controller Server</title>";
-  response_message += "<meta http-equiv=\"refresh\" content=\"5\"></head>";
-#else
+  
   String response_message = "<html><head><title>Buttons Controller Server</title></head>";
-#endif  
   response_message += "<body style=\"background-color:PaleGoldenRod\"><h1><center>Control GPIO pins</center></h1>";
   response_message += "<form method=\"get\">";
 
   response_message += "<a href=\"/\">Return to main page</a><br><br>";
-
-  response_message += "SoftAP Stations: "+String(WiFi.softAPgetStationNum())+"<br><br>";
-
-  response_message += "Connected clients:<br>";
-  for (uint8_t index = 0; index < MAX_SRV_CLIENTS; index++)
-  {
-    if (wifiClients[index] && wifiClients[index].connected())
-    {
-      response_message += "  "+String(index+1)+". IP Address: "+wifiClients[index].remoteIP().toString()+"<br>";
-    }
-    else
-    {
-      response_message += "  "+String(index+1)+". **Available slot for client**<br>";
-    }
-  }
   
   response_message += "<br>Shot Clock:<br>";
 
@@ -256,10 +255,6 @@ void gpioPageHandler()
     response_message += "<input type=\"radio\" name=\"gpio2\" value=\"0\" onclick=\"submit();\">Stop<br><br>";
   }
 
-  //response_message += "Initial Count(secs.)<br>";
-  //response_message += "<input type=\"text\" name=\"icount\" value=\""+String(Count_Init/10)+"\"><br>";
-  //response_message += "<input type=\"submit\" name=\"reset\" value=\"Reset\"><br>";
-  
   response_message += "</form>";
   response_message += "</body></html>";
 

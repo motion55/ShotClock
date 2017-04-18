@@ -26,6 +26,7 @@ WiFiServer wifiServer(localPort);
 
 #define MAX_SRV_CLIENTS 3
 WiFiClient wifiClients[MAX_SRV_CLIENTS];
+unsigned long last_contacts[MAX_SRV_CLIENTS];
 
 #define WIFI_CONNECT_INTERVAL   5000L
 #define MAX_RECONNECT 2
@@ -95,13 +96,16 @@ void wifiServer_loop(void)
   //check if there are any new clients
   if (wifiServer.hasClient())
   {
+    WiFiClient serverClient = wifiServer.available();
     for(idx = 0; idx < MAX_SRV_CLIENTS; idx++)
     {
       //find free/disconnected spot
-      if (!wifiClients[idx] || !wifiClients[idx].connected())
+      if (!wifiClients[idx] || !wifiClients[idx].connected()
+      || (wifiClients[idx].remoteIP()==serverClient.remoteIP()))
       {
         if(wifiClients[idx]) wifiClients[idx].stop();
-        wifiClients[idx] = wifiServer.available();
+        wifiClients[idx] = serverClient;
+        serverClient = wifiServer.available();
         #ifdef DebugSerial
         if (wifiClients[idx])
         {
@@ -109,12 +113,11 @@ void wifiServer_loop(void)
           DebugSerial.print(".Client accepted:");
           DebugSerial.println(wifiClients[idx].remoteIP().toString());
         }
-        #endif  
+        #endif
         continue;
       }
     }
     //no free/disconnected spot so reject
-    WiFiClient serverClient = wifiServer.available();
     #ifdef DebugSerial
     if (serverClient)
     {
@@ -140,18 +143,30 @@ void wifiServer_loop(void)
 #if 1    
   for(uint8_t i = 0; i < MAX_SRV_CLIENTS; i++)
   {
-    if (wifiClients[i] && wifiClients[i].connected())
+    unsigned long current_time = millis();
+        
+    if (wifiClients[i])
     {
-      size_t len = wifiClients[i].available();
-      if(len>0)
+      if (wifiClients[i].connected())
       {
-        uint8_t buf[len];
-        //get data from the telnet client and push it to the UART
-        wifiClients[i].read(buf, len);
-        ESPSerial.write(buf, len);
+        size_t len = wifiClients[i].available();
+        if(len>0)
+        {
+          uint8_t buf[len];
+          //get data from the telnet client and push it to the UART
+          wifiClients[i].read(buf, len);
+          ESPSerial.write(buf, len);
+          last_contacts[i] = millis();
+        }
+        else if ((millis() - last_contacts[i])>3000L)
+        {
+          //wifiClients[i].stop();
+        }
       }
     }
+    
   }
+#endif  
   //check UART for data
   size_t len = ESPSerial.available();
   if(len>0)
@@ -162,11 +177,11 @@ void wifiServer_loop(void)
   #if _USE_UDP_
     Send2UDPStr(sbuf, len);
   #endif
-  #if _USE_TCP_  
+  #if _USE_TCP_
     Send2ClientStr(sbuf, len);
   #endif    
   }
-#endif  
+  
   if (bWiFiConnect)
   {
     unsigned long curr_connect = millis();
