@@ -33,6 +33,7 @@ unsigned long last_connect;
 unsigned long interval = WIFI_CONNECT_INTERVAL;
 bool bServerConnect;
 bool bWiFiConnect;
+unsigned long last_hello;
 
 WiFiClient wifiClient;
 
@@ -112,6 +113,11 @@ void wifiClient_loop(void)
       uint8_t buf[len];
       Serial.readBytes(buf, len);
       wifiClient.write(buf, len);
+    }
+    else if ((curr_connect - last_hello)>=1000L)
+    {
+      last_hello = curr_connect;
+      wifiClient.write((uint8_t)0);
     }
 
     len = wifiClient.available();
